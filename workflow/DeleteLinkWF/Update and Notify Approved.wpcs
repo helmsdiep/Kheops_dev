@@ -1,0 +1,16 @@
+function OUT(entrySet, colArea, workflow, step, stepPath)
+{
+  // entrySet: entry set
+  // colArea: collaboration area
+  // workflow: workflow
+  // step: step
+  // stepPath: step path
+
+var statusUpdater = new StatusUpdaterSS();
+				statusUpdater.updateStatusSS(entrySet,"DELETED_LOCAL");
+				var notificationHandler = new NotificationHandlerSS(workflow.getWflName());
+				notificationHandler.notifyUsersForActionWithStatusSS(entrySet,"ITEM_LINK_DELETION_APPROVED","DELETED_LOCAL");
+				var transHandler = new TransactionHandlerSS();
+				transHandler.insertTransactionSS(colArea,entrySet,stepPath,"ITEM_LINK_DELETION_APPROVED","DELETED_LOCAL","OUT");
+}
+

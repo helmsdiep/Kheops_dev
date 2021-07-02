@@ -1,0 +1,23 @@
+function IN(entrySet, colArea, workflow, step, stepPath)
+{
+  // entrySet: entry set
+  // colArea: collaboration area
+  // workflow: workflow
+  // step: step
+  // stepPath: step path
+
+var transHandler = new TransactionHandlerSS();
+				transHandler.updateTransactionSS(colArea,entrySet,stepPath,"NEW_ITEM_LINK_APPROVAL_PENDING","DRAFT","IN");
+}
+function OUT(entrySet, colArea, workflow, step, stepPath)
+{
+  // entrySet: entry set
+  // colArea: collaboration area
+  // workflow: workflow
+  // step: step
+  // stepPath: step path
+
+var notificationHandler = new NotificationHandlerSS(workflow.getWflName());
+				notificationHandler.notifyUsersForActionWithStatusSS(entrySet,"NEW_ITEM_LINK_APPROVAL_PENDING","DRAFT");
+}
+

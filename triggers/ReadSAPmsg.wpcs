@@ -1,0 +1,352 @@
+//
+// InfoSphere MDM Collaboration Server Script
+// bemadvl
+
+function getEn(hmGlobals, item, sNodeName) {
+    return getScriptByPath("/scripts/triggers/LG.Library.LGUtils").getFunctionByName("getEntryNodesFromAttrPath").invoke(item, sNodeName);
+}
+
+function getValue(item, sNodeName) {
+    return getScriptByPath("/scripts/triggers/LG.Library.LGUtils").getFunctionByName("getEntryNodesFromAttrPath").invoke(item, sNodeName)[0].getEntryNodeValue();
+}
+
+function saveItem(itm, inERPCode, inMaterial, inTargetSystemId) {
+    var moni = getLogger("Monitor");
+    var ActiveMQ = getLogger("ActiveMQ");
+    var inout = getLogger("Inout");
+    var reportName = "GetSAPResponse";
+
+    var errors;
+    var sKey = checkString(itm.getPrimaryKey(), "NULL");
+
+    var hmGlobals = getScriptByPath("/scripts/triggers/LG.Library.Const").getFunctionByName("getConst").invoke();
+
+    var hmHeading = [];
+    hmHeading["sMessageType"] = "ITEM_FLOW";
+    hmHeading["s01AC0044_ERPCode"] = getValue(itm, "01AC0044-ERPCode");
+    hmHeading["s01AC0012_LongName"] = getValue(itm, "01AC0012-LongName");
+    hmHeading["s99CTL010_RevNum"] = getValue(itm, "99CTL010-RevNum").formatNumber("0", null);
+
+    errors = itm.saveCtgItem();
+    if (errors != null) {
+        var globalErrors = errors.getGlobalErrors();
+        var locationErrors = errors.getLocationErrors();
+
+        if (globalErrors != null && globalErrors.size() > 0) {
+            moni.loggerInfo("*************** ERROR : " + sKey + " setUpdateFromECC ****************");
+
+            var sError = "ERROR: JMS-IN: Unable to modify this item.";
+
+            if (globalErrors.size() > 0) {
+                // case we are not abble to modify the attribute of the item
+                // an error has been sent to jms.log
+                var j;
+                sError = sError + "Global errors: " + globalErrors.size() + " : ";
+
+                for (j = 0; j < globalErrors.size(); j++) {
+                    sError = sError + globalErrors[j];
+                    if (sError.contains("Lock")) {
+                        outError = "Lock";
+                        ActiveMQ.loggerInfo("ERROR: JMS-IN: Lock : " + sKey + " ==> " + sError);
+                    }
+                }
+                ActiveMQ.loggerInfo("ERROR: JMS-IN: ==> " + sError);
+                // re-schedule and stop the job
+                var reportId = runJob(reportName, "REPORTEXE");
+                moni.loggerInfo("");
+                moni.loggerInfo("INFO: JMS-IN:  Report : " + reportName + " Id = " + reportId + " is re-scheduled for immediate execution after ERROR");
+                moni.loggerInfo("INFO: JMS-IN:  Status : " + checkString(queryJobStatus(reportId), ""));
+                moni.loggerInfo("");
+            }
+
+            if (outError == "Lock") {
+
+            } else {
+
+
+                throwError("Global errors on save of item '" + sKey + "': " + checkString(sError, ""));
+            }
+
+        } else {
+            moni.loggerInfo("*************** " + sKey + " Save OK ****************");
+            inout.loggerDebug("MDM" + ";" + "INBOUND" + ";" + today().formatDate("yyyyMMdd;HHmmss") + ";" + checkString(inTargetSystemId, "") + ";" + checkString(inERPCode, "") + ";" + checkString(inMaterial, ""));
+        }
+
+        if (locationErrors != null && locationErrors.size() > 0) {
+            moni.loggerInfo("** LocationErrors " + checkString(locationErrors, ""));
+
+            // case we are not abble to modify the attribute of the item
+            // an error has been sent to jms.log
+            var j;
+            sError = sError + "Location errors:" + locationErrors.size() + ":";
+            for (j = 0; j < locationErrors.size(); j++) {
+                sError = sError + locationErrors[j];
+            }
+            throwError("Location errors on save of item '" + sKey + "': " + checkString(sError, ""));
+        } else {
+            // moni.loggerInfo("*************** " + sKey + " Save OK ****************");
+            // inout.loggerDebug("MDM" + ";" + "INBOUND" + ";" + today().formatDate("yyyyMMdd;HHmmss") + ";" + checkString(inTargetSystemId, "") + ";" + checkString(inERPCode, "") + ";" + checkString(inMaterial, ""));
+        }
+
+    } else {
+        moni.loggerInfo("*************** " + sKey + "  ****************");
+        inout.loggerInfo("MDM" + ";" + "INBOUND" + ";" + today().formatDate("yyyyMMdd;HHmmss") + ";" + checkString(inTargetSystemId, "") + ";" + checkString(inERPCode, "") + ";" + checkString(inMaterial, ""));
+    }
+}
+
+function UpdateItem(itmProcessingItem, ctgProcessingCatalog, inERPCode, inMaterial, TargetSystemId, MessageStatus, Information, TechnicalStatus, LastMessageId) {
+
+    var moni = getLogger("Monitor");
+    var ActiveMQ = getLogger("ActiveMQ");
+    var inout = getLogger("Inout");
+
+    var bTargetSystem = "false";
+
+    var node;
+    var i;
+
+    moni.loggerInfo("");
+    moni.loggerInfo("*************** Process: UpdateItem ****************");
+
+    var nodes = itmProcessingItem.getRootEntryNode().getEntryNodes("SC000-GlobPrim/99CTL200-TargetSystemGroup");
+
+    forEachHmElement(nodes, i, node)
+    {
+        var sTargetSystemId = node.getEntryNode("99CTL210-TargetSystemId").getEntryNodeValue();
+        if (sTargetSystemId == TargetSystemId) {
+            moni.loggerInfo("INFO: JMS-IN: TargetSystemId exist      = " + checkString(TargetSystemId, ""));
+
+            var nowMethod = createJavaMethod("java.time.Instant", "now");
+            var TodayUTC = runJavaMethod(null, nowMethod);
+
+            valInformation = checkString(Information, "") + " / Update " + checkString(inERPCode, "") + " at " + TodayUTC;
+
+            nodes[i].getEntryNode("99CTL220-MessageStatus").setEntryNodeValue(MessageStatus);
+            nodes[i].getEntryNode("99CTL230-TechnicalStatus").setEntryNodeValue(TechnicalStatus);
+            nodes[i].getEntryNode("99CTL240-LastMessageId").setEntryNodeValue(LastMessageId);
+            nodes[i].getEntryNode("99CTL250-Information").setEntryNodeValue(valInformation);
+
+            moni.loggerInfo(" TargetSystemId modified   = " + checkString(TargetSystemId, ""));
+            moni.loggerInfo("");
+            bTargetSystem = "true";
+        }
+    }
+    if (bTargetSystem == "false") {
+        moni.loggerInfo("INFO: JMS-IN: TargetSystemId to be created  = " + TargetSystemId);
+
+        var TargetSystemGroup = getEn(hmGlobals, itmProcessingItem, "99CTL200-TargetSystemGroup");
+        var TargetSystemGroupLen = TargetSystemGroup.size();
+
+        var nowMethod = createJavaMethod("java.time.Instant", "now");
+        var TodayUTC = runJavaMethod(null, nowMethod);
+
+        valInformation = checkString(Information, "") + "Update Material at " + TodayUTC;
+
+        itmProcessingItem.setEntryAttrib("SC000-GlobPrim/99CTL200-TargetSystemGroup#" + TargetSystemGroupLen + "/99CTL210-TargetSystemId", TargetSystemId);
+        itmProcessingItem.setEntryAttrib("SC000-GlobPrim/99CTL200-TargetSystemGroup#" + TargetSystemGroupLen + "/99CTL220-MessageStatus", MessageStatus);
+        itmProcessingItem.setEntryAttrib("SC000-GlobPrim/99CTL200-TargetSystemGroup#" + TargetSystemGroupLen + "/99CTL230-TechnicalStatus", TechnicalStatus);
+        itmProcessingItem.setEntryAttrib("SC000-GlobPrim/99CTL200-TargetSystemGroup#" + TargetSystemGroupLen + "/99CTL250-Information", valInformation);
+        itmProcessingItem.setEntryAttrib("SC000-GlobPrim/99CTL200-TargetSystemGroup#" + TargetSystemGroupLen + "/99CTL240-LastMessageId", LastMessageId);
+
+        moni.loggerInfo("INFO: JMS-IN: TargetSystemId created  = " + TargetSystemId);
+        moni.loggerInfo("");
+    }
+
+    itmProcessingItem.setEntryAttrib("SC000-GlobPrim/AttTechSave", "techprocess");
+    var catProcessingItem = itmProcessingItem.getCtgItemCategories("H000-Typology")[0];
+    var strSecSpecName = catProcessingItem.getItemSecondarySpecsForCategory(ctgProcessingCatalog)[0].getSpecName();
+    var specItemSpec = getSpecByName(strSecSpecName);
+
+    //set all the attributes
+    //All types of products (item, bunit and prod)
+    var activeValueMaterial = checkString(itmProcessingItem.getEntryAttrib(strSecSpecName + "/01AC0664-MaterialNumber"), "");
+    moni.loggerInfo("");
+    // moni.loggerInfo(" Active Material Number = " + activeValueMaterial);
+    if (activeValueMaterial == "") {
+        if (specItemSpec.getNodeByPath(strSecSpecName + "/01AC0664-MaterialNumber") != null) {
+            moni.loggerInfo("INFO: JMS-IN:  Update Material to : " + inMaterial + " ****************");
+            itmProcessingItem.setEntryAttrib(strSecSpecName + "/01AC0664-MaterialNumber", inMaterial);
+            moni.loggerInfo("INFO: JMS-IN:  commit DONE ");
+        }
+    } else { moni.loggerInfo(" Already linked "); }
+    saveItem(itmProcessingItem, inERPCode, inMaterial, TargetSystemId);
+}
+
+function setUpdateFromECC(inERPCode, inMaterial, TargetSystemId, MessageStatus, Information, TechnicalStatus, LastMessageId) {
+    var moni = getLogger("Monitor");
+    var ActiveMQ = getLogger("ActiveMQ");
+    var ActiveMQ = getLogger("ActiveMQ");
+
+    moni.loggerInfo("");
+    moni.loggerInfo("*************** Process: setUpdateFromECC ****************");
+
+    var sCtgName = getScriptByPath("/scripts/triggers/LG.Library.LGUtils").getFunctionByName("getCtgNameFromErpCode").invoke(inERPCode);
+    if (sCtgName != null) {
+        var sCaName = "CA" + substring(sCtgName, 1, 300);
+        var ca = getColAreaByName(sCaName);
+        var ctgProcessingCatalog = getCtgByName(sCaName);
+
+        var itmProcessingItem = ctgProcessingCatalog.getEntryByPrimaryKey(inERPCode);
+        if (itmProcessingItem != null) {
+
+            ActiveMQ.loggerInfo("");
+            ActiveMQ.loggerInfo("INFO: Item-IN: Collaboration Area : " + sCaName);
+            UpdateItem(itmProcessingItem, ctgProcessingCatalog, inERPCode, inMaterial, TargetSystemId, MessageStatus, Information, TechnicalStatus, LastMessageId);
+
+            var itmProcessingItem = ctgProcessingCatalog.getEntryByPrimaryKey(inERPCode);
+            var step = ca.getStepsForEntry(itmProcessingItem)[0];
+            ActiveMQ.loggerInfo("INFO: JMS-IN: Collaboration Step ERPCode : " + step);
+            if (step == "WAIT_FOR_SAP") { ca.moveEntryToNextStep(itmProcessingItem, step, "DONE"); }
+        } else {
+            var sCtgName = "C" + substring(sCtgName, 1, 300);
+            var ctgProcessingCatalog = getCtgByName(sCtgName);
+
+            var itmProcessingItem = ctgProcessingCatalog.getEntryByPrimaryKey(inERPCode);
+            if (itmProcessingItem != null) {
+                ActiveMQ.loggerInfo("");
+                ActiveMQ.loggerInfo("INFO: Item-IN: Catalog : " + sCtgName);
+                UpdateItem(itmProcessingItem, ctgProcessingCatalog, inERPCode, inMaterial, TargetSystemId, MessageStatus, Information, TechnicalStatus, LastMessageId);
+            } else {
+                // The ERPCode provided doesn't exist in WPC
+                // a fatal error is sent to jms.log
+                ActiveMQ.loggerInfo("ERROR: JMS-IN: Does not exist: " + inERPCode);
+            }
+        }
+
+    } else {
+        // The company provided in ERPCode doesn't exist 
+        // a fatal error is sent to jms.log
+        ActiveMQ.loggerInfo("ERROR: JMS-IN: Catalog doesn't exists:  " + inERPCode);
+    }
+}
+
+function ReadQueue() {
+
+    var moni = getLogger("Monitor");
+    var ActiveMQ = getLogger("ActiveMQ");
+
+    var iCpt = 0;
+    moni.loggerInfo("************************ Start reading queue  ... AMQ_QUEUE_SAP_KHEOPS_CONF *******************************************");
+
+    var reportName = "GetSAPResponse";
+    // var user = getCurrentUserName();
+    // var report = getReportByName("GetSAPResponse");
+    // var m = createJavaMethod("com.ibm.ccd.report.common.Report", "getJobId");
+    // var reportId = runJavaMethod(report, m);
+    // var StatusReport = queryJobStatus(reportId);
+
+    // moni.loggerInfo("Reportname : " + checkString(reportName, ""));
+    // moni.loggerInfo("user : " + checkString(user, ""));
+    // moni.loggerInfo("report : " + checkString(report, ""));
+    // moni.loggerInfo("m : " + checkString(m, ""));
+    // moni.loggerInfo("reportId : " + checkString(reportId, ""));
+
+    // moni.loggerInfo("Status : " + checkString(queryJobStatus(reportId), ""));
+
+    if (StatusReport != "Running") {
+
+        var bReceiveMessage = "true";
+        var bProcessedMessage = "false";
+
+        var lkpTableKheopsConstants = getLkpByName("L902-KheopsConstants");
+
+        var AMQ_Queue_Kheops_SAP_Mat = lookupValues(lkpTableKheopsConstants, "AMQ_QUEUE_KHEOPS_SAP_MAT")[0];
+        var AMQ_Queue_Kheops_SAP_Char = lookupValues(lkpTableKheopsConstants, "AMQ_QUEUE_KHEOPS_SAP_CHAR")[0];
+        var AMQ_Queue_SAP_Kheops_Conf = lookupValues(lkpTableKheopsConstants, "AMQ_QUEUE_SAP_KHEOPS_CONF")[0];
+        var AMQ_CONNECTION_URL = lookupValues(lkpTableKheopsConstants, "AMQ_CONNECTION_URL")[0];
+        var AMQ_NAMING_FACTORY = lookupValues(lkpTableKheopsConstants, "AMQ_NAMING_FACTORY")[0];
+        var AMQ_CONNECTION_FACTORY = lookupValues(lkpTableKheopsConstants, "AMQ_CONNECTION_FACTORY")[0];
+
+        ActiveMQ.loggerInfo("INFO: JMS-IN: AMQ_Queue_Kheops_SAP_Mat   : " + AMQ_Queue_Kheops_SAP_Mat);
+        ActiveMQ.loggerInfo("INFO: JMS-IN: AMQ_Queue_Kheops_SAP_Char  : " + AMQ_Queue_Kheops_SAP_Char);
+        ActiveMQ.loggerInfo("INFO: JMS-IN: AMQ_Queue_SAP_Kheops_Conf  : " + AMQ_Queue_SAP_Kheops_Conf);
+        ActiveMQ.loggerInfo("INFO: JMS-IN: AMQ_CONNECTION_URL         : " + AMQ_CONNECTION_URL);
+        ActiveMQ.loggerInfo("INFO: JMS-IN: AMQ_NAMING_FACTORY         : " + AMQ_NAMING_FACTORY);
+        ActiveMQ.loggerInfo("INFO: JMS-IN: AMQ_CONNECTION_FACTORY     : " + AMQ_CONNECTION_FACTORY);
+
+        var amqContext = jmsGetContext(AMQ_CONNECTION_URL, AMQ_NAMING_FACTORY);
+        var amqConnectionFactory = amqContext.jmsGetConnectionFactory(AMQ_CONNECTION_FACTORY);
+        var amqQueueConnection = amqConnectionFactory.jmsGetQueueConnection();
+        var amqQueueSession = amqQueueConnection.jmsGetQueueSession();
+        var amqQueue = amqQueueSession.jmsGetQueue(AMQ_Queue_SAP_Kheops_Conf);
+
+        ActiveMQ.loggerInfo("INFO: JMS-IN: amqContext                 : " + amqContext);
+        ActiveMQ.loggerInfo("INFO: JMS-IN: amqConnectionFactory       : " + amqConnectionFactory);
+        ActiveMQ.loggerInfo("INFO: JMS-IN: amqQueueConnection         : " + amqQueueConnection);
+        ActiveMQ.loggerInfo("INFO: JMS-IN: amqQueueSession            : " + amqQueueSession);
+        ActiveMQ.loggerInfo("INFO: JMS-IN: amqQueue                   : " + amqQueue);
+
+        ActiveMQ.loggerInfo("");
+        ActiveMQ.loggerInfo("INFO: JMS-IN: Read queue                 = " + AMQ_Queue_SAP_Kheops_Conf);
+
+        while (bReceiveMessage == "true") {
+
+            useTransaction
+            {
+                var myJmsMessage = amqQueueSession.jmsReceiveMsgFromQueue(amqQueue, 30);
+                if (myJmsMessage != null) {
+                    iCpt++;
+
+                    var hmJMSProperties = myJmsMessage.jmsGetMessageProperties();
+
+                    var LOGTIME_queue_Mat = hmJMSProperties["LOGTIME_queue_Mat"];
+                    var LOGTIME_queue_Conf = hmJMSProperties["LOGTIME_queue_Conf"];
+                    var sTargetSystemId = hmJMSProperties["RCVPRN"];
+                    var sLastMessageId = hmJMSProperties["IDOCNUM_REF"];
+                    var sTechnicalStatus = hmJMSProperties["technical_status"];
+                    var sMaterial = hmJMSProperties["ITEM"];
+                    var sERPCode = hmJMSProperties["ERPCODE"];
+
+                    var sMessageStatus = "";
+                    var sInformation = "Time created in queue_Kheops_SAP_Mat = " + checkString(LOGTIME_queue_Mat, "") + " GMT" + " / queue_SAP_Kheops_Conf " + checkString(LOGTIME_queue_Conf, "");
+
+                    ActiveMQ.loggerInfo("INFO: JMS-IN: Item to be published = " + checkString(hmJMSProperties["ERPCODE"], ""));
+
+                    moni.loggerInfo("INFO: JMS-IN: ************************ Start " + hmJMSProperties["ERPCODE"] + " *******************************************");
+                    moni.loggerInfo("INFO: JMS-IN: AMQ_Queue_Kheops_SAP_Mat   : " + AMQ_Queue_Kheops_SAP_Mat);
+                    moni.loggerInfo("INFO: JMS-IN: AMQ_Queue_Kheops_SAP_Char  : " + AMQ_Queue_Kheops_SAP_Char);
+                    moni.loggerInfo("INFO: JMS-IN: AMQ_Queue_SAP_Kheops_Conf  : " + AMQ_Queue_SAP_Kheops_Conf);
+                    moni.loggerInfo("INFO: JMS-IN: AMQ_CONNECTION_URL         : " + AMQ_CONNECTION_URL);
+                    moni.loggerInfo("INFO: JMS-IN: AMQ_NAMING_FACTORY         : " + AMQ_NAMING_FACTORY);
+                    moni.loggerInfo("INFO: JMS-IN: AMQ_CONNECTION_FACTORY     : " + AMQ_CONNECTION_FACTORY);
+                    moni.loggerInfo("");
+                    moni.loggerInfo("INFO: JMS-IN: Item                       : " + sMaterial);
+                    moni.loggerInfo("INFO: JMS-IN: ERPCode                    : " + sERPCode);
+                    moni.loggerInfo("INFO: JMS-IN: TargetSytemId              : " + checkString(sTargetSystemId, ""));
+                    moni.loggerInfo("INFO: JMS-IN: LastMessageId              : " + checkString(sLastMessageId, ""));
+                    moni.loggerInfo("INFO: JMS-IN: sInformation               : " + checkString(sInformation, ""));
+                    moni.loggerInfo("INFO: JMS-IN: Time Conf                  : " + checkString(LOGTIME_queue_Conf, ""));
+                    moni.loggerInfo("INFO: JMS-IN: TechnicalStatus            : " + sMaterial + " / " + sERPCode + " ==> " + checkString(sTechnicalStatus, ""));
+
+                    setUpdateFromECC(sERPCode, sMaterial, sTargetSystemId, sMessageStatus, sInformation, sTechnicalStatus, sLastMessageId);
+                    bProcessedMessage = "true";
+                }
+
+                else if (bProcessedMessage == "true") {
+                    // re-schedule and stop the job
+                    reportId = runJob(reportName, "REPORTEXE");
+                    moni.loggerInfo("");
+                    moni.loggerInfo("INFO: JMS-IN:  Report : " + reportName + " Id = " + reportId + " is re-scheduled for immediate execution");
+                    moni.loggerInfo("INFO: JMS-IN:  Status : " + checkString(queryJobStatus(reportId), ""));
+                    moni.loggerInfo("");
+
+                    bReceiveMessage = "false";
+                    bProcessedMessage = "false";
+
+                }
+                else if (bProcessedMessage == "false") {
+                    // moni.loggerInfo("No Message's in the queue 		: " + amqQueue);
+                    // bReceiveMessage = "false";
+                }
+            }
+        }
+
+        var r = amqQueueSession.jmsDisconnect(amqQueueConnection);
+        moni.loggerInfo("INFO: JMS-IN:  Number of Messages processed: " + iCpt);
+        moni.loggerInfo("INFO: JMS-IN:  END: getMessageFromAMQ ==> " + checkString(r,""));
+        ActiveMQ.loggerInfo("INFO: JMS-IN: End of publish of items on queue = " + checkString(AMQ_Queue_SAP_Kheops_Conf, ""));
+        moni.loggerInfo("INFO: JMS-IN: ************************ End Reading Queue *******************************************");
+
+    }
+    return iCpt;
+}

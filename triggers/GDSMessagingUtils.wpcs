@@ -1,0 +1,51 @@
+//************************************************ {COPYRIGHT-TOP} ***
+// IBM Confidential
+// OCO Source Materials
+// 5725-E59
+//
+// (c) Copyright IBM Corp. 2000, 2015 All Rights Reserved
+//
+// The source code for this program is not published or otherwise
+// divested of its trade secrets, irrespective of what has been
+// deposited with the U.S. Copyright Office.
+//************************************************ {COPYRIGHT-END} **/
+
+//to check for null or empty field
+function checkForNullAndEmpty(sAttribute) {
+	if (sAttribute != null && sAttribute != "") {
+		return true;
+	} else {
+		return false;
+	}
+}
+
+//Amit R for handling Blank XML tags
+function checkForNullHashMap(HashMap){
+	var newHashMap = [];
+	var newCounter = 0;
+	if(!isString(HashMap)){
+		if(HashMap != null && HashMap.size() > 0)
+		{			
+			for(i=0;i<HashMap.size();i++)
+			{
+				if(checkForNullAndEmpty(HashMap[i]))
+				{
+					newHashMap[newCounter] = HashMap[i];
+					newCounter ++;
+				}
+			}
+
+
+		}else{
+			out.writeln("Hash Map null");
+		}
+	}
+	else{
+		if(checkForNullAndEmpty(HashMap))
+		{
+			newHashMap[0] = HashMap;
+		}
+	}
+
+	return newHashMap;
+}

@@ -1,0 +1,30 @@
+function OUT(entrySet, colArea, workflow, step, stepPath)
+{
+  // entrySet: entry set
+  // colArea: collaboration area
+  // workflow: workflow
+  // step: step
+  // stepPath: step path
+
+//handler to check whether the MODIFY_ITEM_APPROVAL is on or off
+				var pathSelectionHandler = new PathSelectionHandler(colArea);
+				pathSelectionHandler.selectAndSetPath(entrySet,"MODIFY_ITEM_APPROVAL");
+                var transHandler= new TransactionHandlerSS();
+				forEachItemSetElement(entrySet, item)
+				{
+					var exitValue = item.getExitValue();
+					if("POSITIVE" == exitValue){
+					transHandler.updateTransactionSS(colArea,entrySet,stepPath,"MODIFY_ITEM_APPROVAL_PENDING","MODIFIED_COMPLIENT_APPROVAL_PENDING","IN");
+					}
+					else if("NEGATIVE" == exitValue)
+					{
+						var statusUpdater = new StatusUpdaterSS();
+						statusUpdater.updateStatusSS(entrySet,"MODIFIED_LOCAL");
+						var notificationHandler = new NotificationHandlerSS(workflow.getWflName());
+						notificationHandler.notifyUsersForActionWithStatusSS(entrySet,"MODIFY_ITEM_APPROVED","MODIFIED_LOCAL");
+						transHandler.updateTransactionSS(colArea,entrySet,stepPath,"MODIFY_ITEM_APPROVED","MODIFIED_LOCAL","OUT");
+					}
+					break ;
+				}
+}
+

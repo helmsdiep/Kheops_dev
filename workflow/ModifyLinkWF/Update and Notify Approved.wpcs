@@ -1,0 +1,16 @@
+function OUT(entrySet, colArea, workflow, step, stepPath)
+{
+  // entrySet: entry set
+  // colArea: collaboration area
+  // workflow: workflow
+  // step: step
+  // stepPath: step path
+
+var notificationHandler = new NotificationHandlerSS(workflow.getWflName());
+				notificationHandler.notifyUsersForActionWithStatusSS(entrySet,"MODIFY_ITEM_LINK_APPROVED","APPROVED");
+				var transHandler = new TransactionHandlerSS();
+				transHandler.insertTransactionSS(colArea,entrySet,stepPath,"MODIFY_ITEM_LINK_APPROVED","APPROVED","OUT");
+				var linkHandler = new LinkHandler(colArea);
+				linkHandler.updateLinks(entrySet,"APPROVED");
+}
+

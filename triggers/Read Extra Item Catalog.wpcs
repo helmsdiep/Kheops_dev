@@ -1,0 +1,101 @@
+//************************************************ {COPYRIGHT-TOP} ***
+// IBM Confidential
+// OCO Source Materials
+// 5725-E59
+//
+// (c) Copyright IBM Corp. 2000, 2015 All Rights Reserved
+//
+// The source code for this program is not published or otherwise
+// divested of its trade secrets, irrespective of what has been
+// deposited with the U.S. Copyright Office.
+//************************************************ {COPYRIGHT-END} **/
+
+function constructTradeItem(ItemSet,GlobalStatus,LocalStatus){
+
+var SPEC = "Mass_Transaction_Bucket_Spec";
+var GTIN_PATH = SPEC + "/GTIN";
+var TM_PATH = SPEC + "/Target Market";
+var IP_PATH = SPEC + "/Information Provider";
+var count_Ins = 0;
+var tradeItems_Ins = [];
+hmSearchParameters = [];
+var flag = true;
+var GTIN = "";
+var TM = "";
+var IP = "";
+forEachHmElement(ItemSet,key,value){
+		Map = ItemSet[key].getCtgItemAttribValues();
+		len=ItemSet.size();
+		for(var counter=0;counter<len;counter++){
+				GTIN = "";
+				TM = "";
+				IP = "";
+
+				flag = true;
+				if(null!= Map[GTIN_PATH+"#"+counter]){
+					GTIN = Map[GTIN_PATH+"#"+counter];
+				}
+				if((null!= Map[TM_PATH+"#"+counter])&&(Map[TM_PATH+"#"+counter] != "")){
+					TM = Map[TM_PATH+"#"+counter];
+				} 
+				else{
+					TM = "XX";
+				}
+				if((null!= Map[IP_PATH+"#"+counter])&&(Map[IP_PATH+"#"+counter] != "")){
+					IP = Map[IP_PATH+"#"+counter];
+				}   
+				else{
+					IP = "XX";
+				}
+				out.writeln("GTIN :"+ GTIN + " TM :"+ TM + " IP :" + IP);
+				if((null != GTIN)&&(GTIN != "")){
+					tradeItem = getTradeItemSS(GTIN,TM,IP);
+					out.writeln("tradeItem :" + tradeItem);
+				}
+				//check for the tradeItem Global Status
+				if(GlobalStatus != ""){
+					if(GlobalStatus != tradeItem.getTradeItemAttributeValueSS("Global_Attributes_Spec/GDSItemStatus")){
+						flag = false;
+					}
+				}
+				//check for the tradeItem local Status
+				if((flag)&&(LocalStatus != "")){
+					if(LocalStatus != tradeItem.getTradeItemAttributeValueSS("Global_Local_Attributes_Spec/GDSItemStatus")){
+						flag = false;
+					}
+				}
+				if(flag){
+					tradeItems_Ins[count_Ins] = tradeItem;
+					count_Ins++;
+				}
+			}//end of for
+}
+return tradeItems_Ins;
+}//END OF FUNCTION
+
+//function to read items from Extra Item Catalog used for Mass Transactions
+function getExtraTradeItems(GlobalStatus,LocalStatus){
+
+var tradeItems_Ins = [];
+var tradeItems_Min = [];
+var tradeItems_Final = [];
+
+
+var Catalog = getCtgByName("Mass_Publication_Bucket_Catalog");
+var categoryTree = getCategoryTreeByName("Mass_Transaction_Bucket_Hierarchy");
+
+//Read Item in Add Item
+var category = categoryTree.getCategoryByPath("Include Item","/");
+var AddItems =  Catalog.getItemsInCategory(category,true);
+tradeItems_Ins = constructTradeItem(AddItems,GlobalStatus,LocalStatus);
+
+//Read Item in Ignore Item
+category = categoryTree.getCategoryByPath("Ignore Item","/");
+var IgnoreItems =  Catalog.getItemsInCategory(category,true);
+var tradeItems_Min = constructTradeItem(IgnoreItems,GlobalStatus,LocalStatus);
+
+tradeItems_Final[0] = tradeItems_Ins;
+tradeItems_Final[1] = tradeItems_Min;
+
+return tradeItems_Final;
+}

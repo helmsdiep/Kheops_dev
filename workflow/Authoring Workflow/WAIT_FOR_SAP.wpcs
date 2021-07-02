@@ -1,0 +1,33 @@
+function IN(entrySet, colArea, workflow, step, stepPath)
+{
+  // entrySet: entry set
+  // colArea: collaboration area
+  // workflow: workflow
+  // step: step
+  // stepPath: step path
+
+	  forEachEntrySetElement(entrySet, entry) 
+    {
+getScriptByPath("/scripts/triggers/LG.JMS.Out").getFunctionByName("publishItemOnBroker").invoke(entry,colArea);
+       }
+
+return true;
+}
+
+function OUT(entrySet, colArea, workflow, step, stepPath)
+{
+  // entrySet: entry set
+  // colArea: collaboration area
+  // workflow: workflow
+  // step: step
+  // stepPath: step path
+}
+
+function TIMEOUT(entrySet, colArea, workflow, step, stepPath)
+{
+  // entrySet: entry set
+  // colArea: collaboration area
+  // workflow: workflow
+  // step: step
+  // stepPath: step path
+}

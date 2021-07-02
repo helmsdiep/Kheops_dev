@@ -1,0 +1,39 @@
+function IN(entrySet, colArea, workflow, step, stepPath)
+{
+  // entrySet: entry set
+  // colArea: collaboration area
+  // workflow: workflow
+  // step: step
+  // stepPath: step path
+}
+
+function OUT(entrySet, colArea, workflow, step, stepPath)
+{
+  // entrySet: entry set
+  // colArea: collaboration area
+  // workflow: workflow
+  // step: step
+  // stepPath: step path
+  
+    forEachEntrySetElement(entrySet, oEntry) {
+        
+        var product_item = oEntry.getEntryRelationshipAttrib("SC002-IMS/KheopsParent");
+        if (product_item == null) {
+            oEntry.setExitValue("ENTITY_SINGLE");
+        } else {
+            oEntry.setExitValue("ENTITY_WITH_PARENT");
+        }
+
+
+    }
+  
+}
+
+function TIMEOUT(entrySet, colArea, workflow, step, stepPath)
+{
+  // entrySet: entry set
+  // colArea: collaboration area
+  // workflow: workflow
+  // step: step
+  // stepPath: step path
+}

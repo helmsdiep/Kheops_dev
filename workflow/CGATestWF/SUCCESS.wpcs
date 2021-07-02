@@ -1,0 +1,30 @@
+function IN(entrySet, colArea, workflow, step, stepPath)
+{
+var pKey="K010I33070";
+var ca = getColAreaByName("CGA-Test-C010");
+var ctg = getCtgByName("C010-Plaques de plâtre - Gypsum plasterBoards");
+//var item = ctg.getCtgItemByPrimaryKey(pKey);
+var item=ctg.getEntryByPrimaryKey(pKey);
+var res=ca.checkOutEntry(item,"STEP1",false);
+return true;
+}   
+
+
+
+function OUT(entrySet, colArea, workflow, step, stepPath)
+{
+  // entrySet: entry set
+  // colArea: collaboration area
+  // workflow: workflow
+  // step: step
+  // stepPath: step path
+}
+
+function TIMEOUT(entrySet, colArea, workflow, step, stepPath)
+{
+  // entrySet: entry set
+  // colArea: collaboration area
+  // workflow: workflow
+  // step: step
+  // stepPath: step path
+}

@@ -1,0 +1,41 @@
+function test() {
+    a=true;
+    while (a) {
+        var ctg = getCtgByName("C010-Plaques de plâtre - Gypsum plasterBoards");
+        var item = ctg.getCtgItemByPrimaryKey("K010I01062");
+        var errors = item.saveCtgItem();
+        var sError = "";
+        if (errors != null) {
+            out.writeln("errors!");
+            out.writeln(errors);
+            var globalErrors = errors.getGlobalErrors();
+            var localErrors = errors.getLocationErrors();
+            out.writeln(globalErrors);
+            if (globalErrors.size() > 0) {
+                // case we are not abble to modify the attribute of the item
+                // an error has been sent to jms.log
+                var j;
+                sError = sError + "Global Errors: " + globalErrors.size();
+                for (j = 0; j < globalErrors.size(); j++) {
+                    sError = sError + globalErrors[j];
+                }
+            } else {
+                sError = sError + "no global errors";
+            }
+            if (localErrors.size() > 0) {
+                // case we are not abble to modify the attribute of the item
+                // an error has been sent to jms.log
+                var j;
+                sError = sError + "Local Errors: " + localErrors.size();
+                for (j = 0; j < localErrors.size(); j++) {
+                    sError = sError + localErrors[j];
+                }
+            } else {
+                sError = sError + "no local errors";
+            }
+        }
+        out.writeln(sError);
+       sleep("30000");
+    }
+}
+test();

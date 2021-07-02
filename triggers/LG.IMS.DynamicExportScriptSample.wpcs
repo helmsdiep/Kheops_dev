@@ -1,0 +1,18 @@
+function mapFields(hmGlobals, item, tech) {
+var e;var res;catchError(e) {
+var book = new ExcelBook(null,"XLSX");
+var sheet = book.createExcelSheet();
+var row = sheet.createRow(0);
+var cell = row.createExcelCell(0);
+var lib = getScriptByPath("/scripts/triggers/LG.Library.LGUtils");
+var convertL210NumberToUnit = lib.getFunctionByName("convertL210NumberToUnit");
+res = convertL210NumberToUnit.invoke(
+    tech.invoke(hmGlobals, item, "04CP0080-CommercialThickness",null,"","","",0)[0],
+    tech.invoke(hmGlobals, item, "04CP0081-CommercialThicknessUnits",null,"","","",0)[0],
+    "[MMT] - Millimètre");
+    if (null != res) {
+        cell.setCellType("NUMERIC");
+        cell.setNumericCellValue(toDouble(res));
+}}
+if (e!=null){res=checkString(res,"")+ " - " + e.substring(1,300);}
+    return res;}

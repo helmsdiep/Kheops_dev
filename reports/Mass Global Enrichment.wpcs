@@ -1,0 +1,116 @@
+//************************************************ {COPYRIGHT-TOP} ***
+// IBM Confidential
+// OCO Source Materials
+// 5725-E59
+//
+// (c) Copyright IBM Corp. 2000, 2015 All Rights Reserved
+//
+// The source code for this program is not published or otherwise
+// divested of its trade secrets, irrespective of what has been
+// deposited with the U.S. Copyright Office.
+//************************************************ {COPYRIGHT-END} **/
+
+//******************************************************************
+//	MASS TRANSACTION SCRIPT FOR SUBMISSION OF GLOBAL ENRICHMENT
+//*****************************************************************
+
+
+//******************************************************************
+//
+//  MASS JOB ID																					
+//  Fixed as 1 for Global Enrichment job.
+//  Please refer the script operation documentation for details.		
+//
+//******************************************************************
+    var massJobID = 1;
+
+
+//creating hashmap for search parameters
+		
+		var searchParam = "";
+		var hmSearchParameters = [];
+
+
+//function to read the value of the input field.
+		
+		function getValueOfField(paramName) {
+			return checkString(inputs[paramName],"") ;
+		}
+
+
+////////////////////////////////////////////////////////////////
+//											
+//		Populate Global Item Search Attributes	
+//											
+/////////////////////////////////////////////////////////////////
+
+
+		searchParam = getValueOfField("GTIN");
+		if (searchParam!=null && searchParam.length()>0) {
+			hmSearchParameters["GTIN"] = searchParam;
+		}
+
+		searchParam = getValueOfField("GTIN Name");
+		if (searchParam!=null && searchParam.length()>0) {
+			hmSearchParameters["GTIN_NAME"] = searchParam;
+		}
+
+		searchParam = getValueOfField("Brand Name");
+		if (searchParam!=null && searchParam.length()>0) {
+			hmSearchParameters["BRAND_NAME"] = searchParam;
+		}
+
+		searchParam = getValueOfField("DataPool Category Code");
+		if (searchParam!=null && searchParam.length()>0) {
+			hmSearchParameters["UDEX_CODE"] = searchParam;
+		}
+
+		searchParam = getValueOfField("DataPool Category Description");
+		if (searchParam!=null && searchParam.length()>0) {
+			hmSearchParameters["UDEX_CATEGORY_DESC"] = searchParam;
+		}
+
+		searchParam = getValueOfField("Internal Category Code");
+		if (searchParam!=null && searchParam.length()>0) {
+			hmSearchParameters["INTERNAL_CODE"] = searchParam;
+		}
+
+		searchParam = getValueOfField("Internal Category Description");
+		if (searchParam!=null && searchParam.length()>0) {
+			hmSearchParameters["INTERNAL_CODE_DESC"] = searchParam;
+		}
+
+		searchParam = getValueOfField("Product Type");
+		if (searchParam!=null && searchParam.length()>0) {
+			hmSearchParameters["PRODUCT_TYPE"] = searchParam;
+		}
+	
+
+//////////////////////////////////////////////////////////////////////
+//		Create a log file and populate the name to hash map.
+//////////////////////////////////////////////////////////////////////
+		
+		logFile = createOtherOut("");
+		logFile.writeln("");
+		logFile.writeln("===============================================================================");
+		logFile.writeln("REPORT TITLE	:	Mass Global Enrichment");
+		logFile.writeln("DATE AND TIME	:	"+today().formatDate("MM-dd-yyyy HH:mm:ss"));
+		logFile.writeln("===============================================================================");
+		logFile.writeln("WORK IN PROGRESS...");
+		logFile.writeln("");
+
+		var logFileName = "/reports/Mass_Global_Enrichment/" + 
+					today().formatDate("MM-dd-yyyy HH:mm:ss") + ".log";
+
+		if (logFileName!=null && logFileName.length()>0) {
+			hmSearchParameters["REPORT_LOG_FILE_NAME"]=logFileName;
+		}
+
+		logFile.save(logFileName);
+
+//********************************************************
+//
+// Call the script operation to start the mass transaction
+//
+//*********************************************************
+		processMassTransactionSS(massJobID,hmSearchParameters);

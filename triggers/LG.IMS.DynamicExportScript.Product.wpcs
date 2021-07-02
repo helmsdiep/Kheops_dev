@@ -1,0 +1,1114 @@
+function createHeader(hmGlobals, sheet, rowIndex , tech) {
+    var cell;
+    var row;
+    row = sheet.createRow(rowIndex);
+// ProductBenefits_fr-FR
+    cell = row.createExcelCell(5);
+    cell.setCellType("STRING");
+    cell.setStringCellValue("ProductBenefits_fr-FR");
+    cellIndex++;
+// ProductIndicativeYield
+    cell = row.createExcelCell(28);
+    cell.setCellType("STRING");
+    cell.setStringCellValue("ProductIndicativeYield");
+    cellIndex++;
+// ProductName
+    cell = row.createExcelCell(0);
+    cell.setCellType("STRING");
+    cell.setStringCellValue("ProductName");
+    cellIndex++;
+// ProductCoefficientOfExpansion
+    cell = row.createExcelCell(15);
+    cell.setCellType("STRING");
+    cell.setStringCellValue("ProductCoefficientOfExpansion");
+    cellIndex++;
+// ProductMetaTitle_fr-FR
+    cell = row.createExcelCell(6);
+    cell.setCellType("STRING");
+    cell.setStringCellValue("ProductMetaTitle_fr-FR");
+    cellIndex++;
+// ProductMouldResistance
+    cell = row.createExcelCell(22);
+    cell.setCellType("STRING");
+    cell.setStringCellValue("ProductMouldResistance");
+    cellIndex++;
+// ProductImpactResistance
+    cell = row.createExcelCell(23);
+    cell.setCellType("STRING");
+    cell.setStringCellValue("ProductImpactResistance");
+    cellIndex++;
+// ProductTensileStrengthLongitudinal
+    cell = row.createExcelCell(17);
+    cell.setCellType("STRING");
+    cell.setStringCellValue("ProductTensileStrengthLongitudinal");
+    cellIndex++;
+// ProductApplicationType
+    cell = row.createExcelCell(10);
+    cell.setCellType("STRING");
+    cell.setStringCellValue("ProductApplicationType");
+    cellIndex++;
+// ProductThermalConductivityAt20C
+    cell = row.createExcelCell(38);
+    cell.setCellType("STRING");
+    cell.setStringCellValue("ProductThermalConductivityAt20C");
+    cellIndex++;
+// ProductFireReactionClass
+    cell = row.createExcelCell(11);
+    cell.setCellType("STRING");
+    cell.setStringCellValue("ProductFireReactionClass");
+    cellIndex++;
+// ProductCompressibilityClass
+    cell = row.createExcelCell(39);
+    cell.setCellType("STRING");
+    cell.setStringCellValue("ProductCompressibilityClass");
+    cellIndex++;
+// KheopsPK
+    cell = row.createExcelCell(13);
+    cell.setCellType("STRING");
+    cell.setStringCellValue("KheopsPK");
+    cellIndex++;
+// WebCategory
+    cell = row.createExcelCell(12);
+    cell.setCellType("STRING");
+    cell.setStringCellValue("WebCategory");
+    cellIndex++;
+// ProductBrand
+    cell = row.createExcelCell(3);
+    cell.setCellType("STRING");
+    cell.setStringCellValue("ProductBrand");
+    cellIndex++;
+// ProductCoreCohesion
+    cell = row.createExcelCell(41);
+    cell.setCellType("STRING");
+    cell.setStringCellValue("ProductCoreCohesion");
+    cellIndex++;
+// ProductDeformationMax
+    cell = row.createExcelCell(43);
+    cell.setCellType("STRING");
+    cell.setStringCellValue("ProductDeformationMax");
+    cellIndex++;
+// ProductSurfaceHardness
+    cell = row.createExcelCell(21);
+    cell.setCellType("STRING");
+    cell.setStringCellValue("ProductSurfaceHardness");
+    cellIndex++;
+// ProductTensileStrengthTransversal
+    cell = row.createExcelCell(18);
+    cell.setCellType("STRING");
+    cell.setStringCellValue("ProductTensileStrengthTransversal");
+    cellIndex++;
+// ProductCoreMaterial
+    cell = row.createExcelCell(25);
+    cell.setCellType("STRING");
+    cell.setStringCellValue("ProductCoreMaterial");
+    cellIndex++;
+// ProductApplication_fr-FR
+    cell = row.createExcelCell(9);
+    cell.setCellType("STRING");
+    cell.setStringCellValue("ProductApplication_fr-FR");
+    cellIndex++;
+// ProductCompressionResistance
+    cell = row.createExcelCell(40);
+    cell.setCellType("STRING");
+    cell.setStringCellValue("ProductCompressionResistance");
+    cellIndex++;
+// ProductSpecificHeatCapacity
+    cell = row.createExcelCell(16);
+    cell.setCellType("STRING");
+    cell.setStringCellValue("ProductSpecificHeatCapacity");
+    cellIndex++;
+// ProductUsageTime
+    cell = row.createExcelCell(33);
+    cell.setCellType("STRING");
+    cell.setStringCellValue("ProductUsageTime");
+    cellIndex++;
+// ProductPermeanceClass
+    cell = row.createExcelCell(37);
+    cell.setCellType("STRING");
+    cell.setStringCellValue("ProductPermeanceClass");
+    cellIndex++;
+// ProductMetaDescription_fr-FR
+    cell = row.createExcelCell(7);
+    cell.setCellType("STRING");
+    cell.setStringCellValue("ProductMetaDescription_fr-FR");
+    cellIndex++;
+// ProductIsole
+    cell = row.createExcelCell(44);
+    cell.setCellType("STRING");
+    cell.setStringCellValue("ProductIsole");
+    cellIndex++;
+// ProductMixingRatio
+    cell = row.createExcelCell(30);
+    cell.setCellType("STRING");
+    cell.setStringCellValue("ProductMixingRatio");
+    cellIndex++;
+// ProductAirDryingType
+    cell = row.createExcelCell(26);
+    cell.setCellType("STRING");
+    cell.setStringCellValue("ProductAirDryingType");
+    cellIndex++;
+// ProductDeformation
+    cell = row.createExcelCell(42);
+    cell.setCellType("STRING");
+    cell.setStringCellValue("ProductDeformation");
+    cellIndex++;
+// ProductShearStrength
+    cell = row.createExcelCell(20);
+    cell.setCellType("STRING");
+    cell.setStringCellValue("ProductShearStrength");
+    cellIndex++;
+// ProductShelfLife
+    cell = row.createExcelCell(31);
+    cell.setCellType("STRING");
+    cell.setStringCellValue("ProductShelfLife");
+    cellIndex++;
+// ProductBoardType
+    cell = row.createExcelCell(24);
+    cell.setCellType("STRING");
+    cell.setStringCellValue("ProductBoardType");
+    cellIndex++;
+// ProductSubCategory
+    cell = row.createExcelCell(2);
+    cell.setCellType("STRING");
+    cell.setStringCellValue("ProductSubCategory");
+    cellIndex++;
+// ProductApplicationMethod
+    cell = row.createExcelCell(27);
+    cell.setCellType("STRING");
+    cell.setStringCellValue("ProductApplicationMethod");
+    cellIndex++;
+// ProductProductUsageCategory
+    cell = row.createExcelCell(34);
+    cell.setCellType("STRING");
+    cell.setStringCellValue("ProductProductUsageCategory");
+    cellIndex++;
+// ProductSurfaceTreatment
+    cell = row.createExcelCell(35);
+    cell.setCellType("STRING");
+    cell.setStringCellValue("ProductSurfaceTreatment");
+    cellIndex++;
+// ProductThermalResistance
+    cell = row.createExcelCell(19);
+    cell.setCellType("STRING");
+    cell.setStringCellValue("ProductThermalResistance");
+    cellIndex++;
+// ProductCategory
+    cell = row.createExcelCell(1);
+    cell.setCellType("STRING");
+    cell.setStringCellValue("ProductCategory");
+    cellIndex++;
+// ProductDescription_fr-FR
+    cell = row.createExcelCell(4);
+    cell.setCellType("STRING");
+    cell.setStringCellValue("ProductDescription_fr-FR");
+    cellIndex++;
+// ProductMixingMethod
+    cell = row.createExcelCell(29);
+    cell.setCellType("STRING");
+    cell.setStringCellValue("ProductMixingMethod");
+    cellIndex++;
+// ProductWaterAbsorptionClass
+    cell = row.createExcelCell(14);
+    cell.setCellType("STRING");
+    cell.setStringCellValue("ProductWaterAbsorptionClass");
+    cellIndex++;
+// ProductTimeBeforePainting
+    cell = row.createExcelCell(32);
+    cell.setCellType("STRING");
+    cell.setStringCellValue("ProductTimeBeforePainting");
+    cellIndex++;
+// ProductMetaName_fr-FR
+    cell = row.createExcelCell(8);
+    cell.setCellType("STRING");
+    cell.setStringCellValue("ProductMetaName_fr-FR");
+    cellIndex++;
+// ProductReworkTime
+    cell = row.createExcelCell(36);
+    cell.setCellType("STRING");
+    cell.setStringCellValue("ProductReworkTime");
+    cellIndex++;
+}
+function mapFields(hmGlobals, item, sheet, rowIndex , tech) {
+    var cell;
+    var row;
+    var attrDate;
+    var attrString;
+    var attrNum;
+    var e;
+    var en_US = new Locale("en", "US");
+    row = sheet.createRow(rowIndex);
+    var itemCat=checkString(tech.invoke(hmGlobals, item, "01AC0050-WebSiteCategory",3,"","","",0)[0],"");
+// Category = COMMON
+if (1==1) {
+// COMMON attributes
+// COMMON:Product:ProductName-ProductName
+    cell = row.createExcelCell(0);
+if(true){
+var res=null;
+e=null;catchError(e) {
+res = tech.invoke(hmGlobals, item, "01AC0012-LongName",null,"","","",0)[0];
+    if (null != res) {
+        cell.setCellType("STRING");
+        cell.setStringCellValue(res);
+    }
+    }
+if (e!=null){res=checkString(res,"")+ " - " + e.substring(1,300);cell.setCellType("STRING");cell.setStringCellValue(res);}
+    }
+
+// COMMON:Product:ProductCategory-ProductCategory
+    cell = row.createExcelCell(1);
+if(true){
+var res=null;
+e=null;catchError(e) {
+res = tech.invoke(hmGlobals, item, "01AC0050-WebSiteCategory",3,"","","",0)[0];
+    if (null != res) {
+        cell.setCellType("STRING");
+        cell.setStringCellValue(res);
+    }
+    }
+if (e!=null){res=checkString(res,"")+ " - " + e.substring(1,300);cell.setCellType("STRING");cell.setStringCellValue(res);}
+    }
+
+// COMMON:Product:ProductSubCategory-ProductSubCategory
+    cell = row.createExcelCell(2);
+if(true){
+var res=null;
+e=null;catchError(e) {
+res = tech.invoke(hmGlobals, item, "01AC0050-WebSiteCategory",4,"","","",0)[0];
+    if (null != res) {
+        cell.setCellType("STRING");
+        cell.setStringCellValue(res);
+    }
+    }
+if (e!=null){res=checkString(res,"")+ " - " + e.substring(1,300);cell.setCellType("STRING");cell.setStringCellValue(res);}
+    }
+
+// COMMON:Product:ProductBrand-ProductBrand
+    cell = row.createExcelCell(3);
+if(true){
+var res=null;
+e=null;catchError(e) {
+res = tech.invoke(hmGlobals, item, "01AC0036-brandName",2,"","","",0)[0];
+    if (null != res) {
+        cell.setCellType("STRING");
+        cell.setStringCellValue(res);
+    }
+    }
+if (e!=null){res=checkString(res,"")+ " - " + e.substring(1,300);cell.setCellType("STRING");cell.setStringCellValue(res);}
+    }
+
+// COMMON:Product:ProductDescription_fr-FR-ProductDescription_fr-FR
+    cell = row.createExcelCell(4);
+if(true){
+var res=null;
+e=null;catchError(e) {
+res = tech.invoke(hmGlobals, item, "03FN0065-DescriptionLong",null,"","","",0)[0];
+    if (null != res) {
+        cell.setCellType("STRING");
+        cell.setStringCellValue(res);
+    }
+    }
+if (e!=null){res=checkString(res,"")+ " - " + e.substring(1,300);cell.setCellType("STRING");cell.setStringCellValue(res);}
+    }
+
+// COMMON:Product:ProductBenefits_fr-FR-ProductBenefits_fr-FR
+    cell = row.createExcelCell(5);
+if(true){
+var res=null;
+e=null;catchError(e) {
+res = tech.invoke(hmGlobals, item, "03FN0067-ProductQualities",null,"","","",0)[0];
+    if (null != res) {
+        cell.setCellType("STRING");
+        cell.setStringCellValue(res);
+    }
+    }
+if (e!=null){res=checkString(res,"")+ " - " + e.substring(1,300);cell.setCellType("STRING");cell.setStringCellValue(res);}
+    }
+
+// COMMON:Product:ProductMetaTitle_fr-FR-ProductMetaTitle_fr-FR
+    cell = row.createExcelCell(6);
+if(true){
+var res=null;
+e=null;catchError(e) {
+res = tech.invoke(hmGlobals, item, "01AC0012-LongName",null,"","","",0)[0];
+    if (null != res) {
+        cell.setCellType("STRING");
+        cell.setStringCellValue(res);
+    }
+    }
+if (e!=null){res=checkString(res,"")+ " - " + e.substring(1,300);cell.setCellType("STRING");cell.setStringCellValue(res);}
+    }
+
+// COMMON:Product:ProductMetaDescription_fr-FR-ProductMetaDescription_fr-FR
+    cell = row.createExcelCell(7);
+if(true){
+var res=null;
+e=null;catchError(e) {
+res = tech.invoke(hmGlobals, item, "03FN0066-TradeItemDescriptionShort",null,"","","",0)[0];
+    if (null != res) {
+        cell.setCellType("STRING");
+        cell.setStringCellValue(res);
+    }
+    }
+if (e!=null){res=checkString(res,"")+ " - " + e.substring(1,300);cell.setCellType("STRING");cell.setStringCellValue(res);}
+    }
+
+// COMMON:Product:ProductMetaName_fr-FR-ProductMetaName_fr-FR
+    cell = row.createExcelCell(8);
+if(true){
+var res=null;
+e=null;catchError(e) {
+res = tech.invoke(hmGlobals, item, "01AC0012-LongName",null,"","","",0)[0];
+    if (null != res) {
+        cell.setCellType("STRING");
+        cell.setStringCellValue(res);
+    }
+    }
+if (e!=null){res=checkString(res,"")+ " - " + e.substring(1,300);cell.setCellType("STRING");cell.setStringCellValue(res);}
+    }
+
+// COMMON:Product:ProductApplication_fr-FR-ProductApplication_fr-FR
+    cell = row.createExcelCell(9);
+if(true){
+var res=null;
+e=null;catchError(e) {
+res = tech.invoke(hmGlobals, item, "03FN0066-TradeItemDescriptionShort",null,"","","",0)[0];
+    if (null != res) {
+        cell.setCellType("STRING");
+        cell.setStringCellValue(res);
+    }
+    }
+if (e!=null){res=checkString(res,"")+ " - " + e.substring(1,300);cell.setCellType("STRING");cell.setStringCellValue(res);}
+    }
+
+// COMMON:Product:ProductApplicationType-ProductApplicationType
+    cell = row.createExcelCell(10);
+if(true){
+var res=null;
+e=null;catchError(e) {
+res = tech.invoke(hmGlobals, item, "07MO0443-CompatibleWetBuilding",null,"","","",0)[0];
+    if (null != res) {
+        cell.setCellType("STRING");
+        cell.setStringCellValue(res);
+    }
+    }
+if (e!=null){res=checkString(res,"")+ " - " + e.substring(1,300);cell.setCellType("STRING");cell.setStringCellValue(res);}
+    }
+
+// COMMON:Product:ProductFireReactionClass-ProductFireReactionClass
+    cell = row.createExcelCell(11);
+if(true){
+var res=null;
+e=null;catchError(e) {
+res = tech.invoke(hmGlobals, item, "05PC0305-EuroclasseClassification",null,"","","",0)[0];
+    if (null != res) {
+        cell.setCellType("STRING");
+        cell.setStringCellValue(res);
+    }
+    }
+if (e!=null){res=checkString(res,"")+ " - " + e.substring(1,300);cell.setCellType("STRING");cell.setStringCellValue(res);}
+    }
+
+// COMMON:Item:WebCategory-WebCategory
+    cell = row.createExcelCell(12);
+if(true){
+var res=null;
+e=null;catchError(e) {
+res = tech.invoke(hmGlobals, item, "01AC0050-WebSiteCategory",3,"","","",0)[0];
+    if (null != res) {
+        cell.setCellType("STRING");
+        cell.setStringCellValue(res);
+    }
+    }
+if (e!=null){res=checkString(res,"")+ " - " + e.substring(1,300);cell.setCellType("STRING");cell.setStringCellValue(res);}
+    }
+
+// COMMON:Product:KheopsPK-KheopsPK
+    cell = row.createExcelCell(13);
+if(true){
+var res=null;
+e=null;catchError(e) {
+res = tech.invoke(hmGlobals, item, "01AC0044-ERPCode",null,"","","",1)[0];
+    if (null != res) {
+        cell.setCellType("STRING");
+        cell.setStringCellValue(res);
+    }
+    }
+if (e!=null){res=checkString(res,"")+ " - " + e.substring(1,300);cell.setCellType("STRING");cell.setStringCellValue(res);}
+    }
+
+}
+// ######## 
+// Category = PLASTERBOARDS
+if (itemCat=="SiniatBoards"){
+// PLASTERBOARDS:Product:ProductWaterAbsorptionClass-ProductWaterAbsorptionClass
+    cell = row.createExcelCell(14);
+if(true){
+var res=null;
+e=null;catchError(e) {
+res = tech.invoke(hmGlobals, item, "05PC0280-WaterClassOfBehavior",1,"","","",0)[0];
+    if (null != res) {
+        cell.setCellType("STRING");
+        cell.setStringCellValue(res);
+    }
+    }
+if (e!=null){res=checkString(res,"")+ " - " + e.substring(1,300);cell.setCellType("STRING");cell.setStringCellValue(res);}
+    }
+
+// PLASTERBOARDS:Product:ProductCoefficientOfExpansion-ProductCoefficientOfExpansion
+    cell = row.createExcelCell(15);
+if(true){
+var res=null;
+e=null;catchError(e) {
+res = tech.invoke(hmGlobals, item, "05PC0574-ThermalExpansion",null,"","","",0)[0];
+    if (null != res) {
+        cell.setCellType("STRING");
+        cell.setStringCellValue(res);
+    }
+    }
+if (e!=null){res=checkString(res,"")+ " - " + e.substring(1,300);cell.setCellType("STRING");cell.setStringCellValue(res);}
+    }
+
+// PLASTERBOARDS:Product:ProductSpecificHeatCapacity-ProductSpecificHeatCapacity
+    cell = row.createExcelCell(16);
+if(true){
+var res=null;
+e=null;catchError(e) {
+res = tech.invoke(hmGlobals, item, "05PC0822-SpecificHeat",null,"","","",0)[0];
+    if (null != res) {
+        cell.setCellType("STRING");
+        cell.setStringCellValue(res);
+    }
+    }
+if (e!=null){res=checkString(res,"")+ " - " + e.substring(1,300);cell.setCellType("STRING");cell.setStringCellValue(res);}
+    }
+
+// PLASTERBOARDS:Product:ProductTensileStrengthLongitudinal-ProductTensileStrengthLongitudinal
+    cell = row.createExcelCell(17);
+if(true){
+var res=null;
+e=null;catchError(e) {
+res = tech.invoke(hmGlobals, item, "05PC0320-TensileStrengthMd",null,"","","",0)[0];
+    if (null != res) {
+        cell.setCellType("STRING");
+        cell.setStringCellValue(res);
+    }
+    }
+if (e!=null){res=checkString(res,"")+ " - " + e.substring(1,300);cell.setCellType("STRING");cell.setStringCellValue(res);}
+    }
+
+// PLASTERBOARDS:Product:ProductTensileStrengthTransversal-ProductTensileStrengthTransversal
+    cell = row.createExcelCell(18);
+if(true){
+var res=null;
+e=null;catchError(e) {
+res = tech.invoke(hmGlobals, item, "05PC0321-TensileStrengthCd",null,"","","",0)[0];
+    if (null != res) {
+        cell.setCellType("STRING");
+        cell.setStringCellValue(res);
+    }
+    }
+if (e!=null){res=checkString(res,"")+ " - " + e.substring(1,300);cell.setCellType("STRING");cell.setStringCellValue(res);}
+    }
+
+// PLASTERBOARDS:Product:ProductThermalResistance-ProductThermalResistance
+    cell = row.createExcelCell(19);
+if(true){
+var res=null;
+e=null;catchError(e) {
+res = tech.invoke(hmGlobals, item, "05PC0300-ThermalResistance",null,"","","",0)[0];
+    if (null != res) {
+        cell.setCellType("STRING");
+        cell.setStringCellValue(res);
+    }
+    }
+if (e!=null){res=checkString(res,"")+ " - " + e.substring(1,300);cell.setCellType("STRING");cell.setStringCellValue(res);}
+    }
+
+// PLASTERBOARDS:Product:ProductShearStrength-ProductShearStrength
+    cell = row.createExcelCell(20);
+if(true){
+var res=null;
+e=null;catchError(e) {
+res = tech.invoke(hmGlobals, item, "05PC0295-ShearStrength",null,"","","",0)[0];
+    if (null != res) {
+        cell.setCellType("STRING");
+        cell.setStringCellValue(res);
+    }
+    }
+if (e!=null){res=checkString(res,"")+ " - " + e.substring(1,300);cell.setCellType("STRING");cell.setStringCellValue(res);}
+    }
+
+// PLASTERBOARDS:Product:ProductSurfaceHardness-ProductSurfaceHardness
+    cell = row.createExcelCell(21);
+if(true){
+var res=null;
+e=null;catchError(e) {
+res = tech.invoke(hmGlobals, item, "05PC0258-SurfaceHardness",1,"","","",0)[0];
+    if (null != res) {
+        cell.setCellType("STRING");
+        cell.setStringCellValue(res);
+    }
+    }
+if (e!=null){res=checkString(res,"")+ " - " + e.substring(1,300);cell.setCellType("STRING");cell.setStringCellValue(res);}
+    }
+
+// PLASTERBOARDS:Product:ProductMouldResistance-ProductMouldResistance
+    cell = row.createExcelCell(22);
+if(true){
+var res=null;
+e=null;catchError(e) {
+res = tech.invoke(hmGlobals, item, "05PC0576-MouldResistance",null,"","","",0)[0];
+    if (null != res) {
+        cell.setCellType("STRING");
+        cell.setStringCellValue(res);
+    }
+    }
+if (e!=null){res=checkString(res,"")+ " - " + e.substring(1,300);cell.setCellType("STRING");cell.setStringCellValue(res);}
+    }
+
+// PLASTERBOARDS:Product:ProductImpactResistance-ProductImpactResistance
+    cell = row.createExcelCell(23);
+if(true){
+var res=null;
+e=null;catchError(e) {
+res = tech.invoke(hmGlobals, item, "05PC0575-ImpactResistance",null,"","","",0)[0];
+    if (null != res) {
+        cell.setCellType("STRING");
+        cell.setStringCellValue(res);
+    }
+    }
+if (e!=null){res=checkString(res,"")+ " - " + e.substring(1,300);cell.setCellType("STRING");cell.setStringCellValue(res);}
+    }
+
+// PLASTERBOARDS:Product:ProductBoardType-ProductBoardType
+    cell = row.createExcelCell(24);
+if(true){
+var res=null;
+e=null;catchError(e) {
+res = tech.invoke(hmGlobals, item, "04CP0158-TypeBoard",1,"","","",0)[0];
+    if (null != res) {
+        cell.setCellType("STRING");
+        cell.setStringCellValue(res);
+    }
+    }
+if (e!=null){res=checkString(res,"")+ " - " + e.substring(1,300);cell.setCellType("STRING");cell.setStringCellValue(res);}
+    }
+
+// PLASTERBOARDS:Product:ProductCoreMaterial-ProductCoreMaterial
+    cell = row.createExcelCell(25);
+if(true){
+var res=null;
+e=null;catchError(e) {
+res = tech.invoke(hmGlobals, item, "04CP0226-Material",null,"","","",0)[0];
+    if (null != res) {
+        cell.setCellType("STRING");
+        cell.setStringCellValue(res);
+    }
+    }
+if (e!=null){res=checkString(res,"")+ " - " + e.substring(1,300);cell.setCellType("STRING");cell.setStringCellValue(res);}
+    }
+
+}
+// ######## 
+// Category = ALVEOLAR PARTITIONS
+if (itemCat=="SiniatAlveolarPartitions"){
+// ALVEOLAR PARTITIONS:Product:ProductThermalResistance-ProductThermalResistance
+    cell = row.createExcelCell(19);
+if(true){
+var res=null;
+e=null;catchError(e) {
+res = tech.invoke(hmGlobals, item, "05PC0300-ThermalResistance",null,"","","",0)[0];
+    if (null != res) {
+        cell.setCellType("STRING");
+        cell.setStringCellValue(res);
+    }
+    }
+if (e!=null){res=checkString(res,"")+ " - " + e.substring(1,300);cell.setCellType("STRING");cell.setStringCellValue(res);}
+    }
+
+}
+// ######## 
+// Category = JOINTING COMPOUNDS, ADHESIVES AND BOUNDING COMPOUNDS
+if (itemCat=="SiniatAdhesivesJointingBoundingCompounds"){
+// JOINTING COMPOUNDS, ADHESIVES AND BOUNDING COMPOUNDS:Product:ProductAirDryingType-ProductAirDryingType
+    cell = row.createExcelCell(26);
+if(true){
+var res=null;
+e=null;catchError(e) {
+res = tech.invoke(hmGlobals, item, "07MO0460-LatencyFor2ndMasterKey",null,"","","",0)[0];
+    if (null != res) {
+        cell.setCellType("STRING");
+        cell.setStringCellValue(res);
+    }
+    }
+if (e!=null){res=checkString(res,"")+ " - " + e.substring(1,300);cell.setCellType("STRING");cell.setStringCellValue(res);}
+    }
+
+// JOINTING COMPOUNDS, ADHESIVES AND BOUNDING COMPOUNDS:Product:ProductApplicationMethod-ProductApplicationMethod
+    cell = row.createExcelCell(27);
+if(true){
+var res=null;
+e=null;catchError(e) {
+res = tech.invoke(hmGlobals, item, "07MO0451-ModeOfApplication",null,"","","",0)[0];
+    if (null != res) {
+        cell.setCellType("STRING");
+        cell.setStringCellValue(res);
+    }
+    }
+if (e!=null){res=checkString(res,"")+ " - " + e.substring(1,300);cell.setCellType("STRING");cell.setStringCellValue(res);}
+    }
+
+// JOINTING COMPOUNDS, ADHESIVES AND BOUNDING COMPOUNDS:Product:ProductIndicativeYield-ProductIndicativeYield
+    cell = row.createExcelCell(28);
+if(true){
+var res=null;
+e=null;catchError(e) {
+res = tech.invoke(hmGlobals, item, "07MO0472-ConsumptionOfFacing",null,"","","",0)[0];
+    if (null != res) {
+        cell.setCellType("STRING");
+        cell.setStringCellValue(res);
+    }
+    }
+if (e!=null){res=checkString(res,"")+ " - " + e.substring(1,300);cell.setCellType("STRING");cell.setStringCellValue(res);}
+    }
+
+// JOINTING COMPOUNDS, ADHESIVES AND BOUNDING COMPOUNDS:Product:ProductMixingMethod-ProductMixingMethod
+    cell = row.createExcelCell(29);
+if(true){
+var res=null;
+e=null;catchError(e) {
+res = tech.invoke(hmGlobals, item, "07MO0452-ModeOfMixing",null,"","","",0)[0];
+    if (null != res) {
+        cell.setCellType("STRING");
+        cell.setStringCellValue(res);
+    }
+    }
+if (e!=null){res=checkString(res,"")+ " - " + e.substring(1,300);cell.setCellType("STRING");cell.setStringCellValue(res);}
+    }
+
+// JOINTING COMPOUNDS, ADHESIVES AND BOUNDING COMPOUNDS:Product:ProductMixingRatio-ProductMixingRatio
+    cell = row.createExcelCell(30);
+if(true){
+var res=null;
+e=null;catchError(e) {
+res = tech.invoke(hmGlobals, item, "07MO0447-PowderWaterRatio",null,"","","",0)[0];
+    if (null != res) {
+        cell.setCellType("STRING");
+        cell.setStringCellValue(res);
+    }
+    }
+if (e!=null){res=checkString(res,"")+ " - " + e.substring(1,300);cell.setCellType("STRING");cell.setStringCellValue(res);}
+    }
+
+// JOINTING COMPOUNDS, ADHESIVES AND BOUNDING COMPOUNDS:Product:ProductShelfLife-ProductShelfLife
+    cell = row.createExcelCell(31);
+if(true){
+var res=null;
+e=null;catchError(e) {
+res = tech.invoke(hmGlobals, item, "07MO0486-ShelfLife",null,"","","",0)[0]+" " +
+tech.invoke(hmGlobals, item, "07MO0487-ShelfLifeUnit",3,"","","",0)[0];
+    if (null != res) {
+        cell.setCellType("STRING");
+        cell.setStringCellValue(res);
+    }
+    }
+if (e!=null){res=checkString(res,"")+ " - " + e.substring(1,300);cell.setCellType("STRING");cell.setStringCellValue(res);}
+    }
+
+// JOINTING COMPOUNDS, ADHESIVES AND BOUNDING COMPOUNDS:Product:ProductTimeBeforePainting-ProductTimeBeforePainting
+    cell = row.createExcelCell(32);
+if(true){
+var res=null;
+e=null;catchError(e) {
+res = tech.invoke(hmGlobals, item, "01AC0012-LongName",null,"","","",0)[0];
+    if (null != res) {
+        cell.setCellType("STRING");
+        cell.setStringCellValue(res);
+    }
+    }
+if (e!=null){res=checkString(res,"")+ " - " + e.substring(1,300);cell.setCellType("STRING");cell.setStringCellValue(res);}
+    }
+
+// JOINTING COMPOUNDS, ADHESIVES AND BOUNDING COMPOUNDS:Product:ProductUsageTime-ProductUsageTime
+    cell = row.createExcelCell(33);
+if(true){
+var res=null;
+e=null;catchError(e) {
+res = tech.invoke(hmGlobals, item, "07MO0454-TimeOfUse",null,"","","",0)[0];
+    if (null != res) {
+        cell.setCellType("STRING");
+        cell.setStringCellValue(res);
+    }
+    }
+if (e!=null){res=checkString(res,"")+ " - " + e.substring(1,300);cell.setCellType("STRING");cell.setStringCellValue(res);}
+    }
+
+}
+// ######## 
+// Category = ACCESSORIES
+if (itemCat=="SiniatOther"){
+// ACCESSORIES:Product:ProductProductUsageCategory-ProductProductUsageCategory
+    cell = row.createExcelCell(34);
+if(true){
+var res=null;
+e=null;catchError(e) {
+res = tech.invoke(hmGlobals, item, "03FN0068-ProductFunction",null,"","","",0)[0];
+    if (null != res) {
+        cell.setCellType("STRING");
+        cell.setStringCellValue(res);
+    }
+    }
+if (e!=null){res=checkString(res,"")+ " - " + e.substring(1,300);cell.setCellType("STRING");cell.setStringCellValue(res);}
+    }
+
+// ACCESSORIES:Product:ProductSurfaceTreatment-ProductSurfaceTreatment
+    cell = row.createExcelCell(35);
+if(true){
+var res=null;
+e=null;catchError(e) {
+res = tech.invoke(hmGlobals, item, "04CP0188-Galvanised",null,"","","",0)[0];
+    if (null != res) {
+        cell.setCellType("STRING");
+        cell.setStringCellValue(res);
+    }
+    }
+if (e!=null){res=checkString(res,"")+ " - " + e.substring(1,300);cell.setCellType("STRING");cell.setStringCellValue(res);}
+    }
+
+}
+// ######## 
+// Category = BUILDING PLASTERS
+if (itemCat=="SiniatPlasters"){
+// BUILDING PLASTERS:Product:ProductApplicationMethod-ProductApplicationMethod
+    cell = row.createExcelCell(27);
+if(true){
+var res=null;
+e=null;catchError(e) {
+res = tech.invoke(hmGlobals, item, "07MO0451-ModeOfApplication",null,"","","",0)[0];
+    if (null != res) {
+        cell.setCellType("STRING");
+        cell.setStringCellValue(res);
+    }
+    }
+if (e!=null){res=checkString(res,"")+ " - " + e.substring(1,300);cell.setCellType("STRING");cell.setStringCellValue(res);}
+    }
+
+// BUILDING PLASTERS:Product:ProductIndicativeYield-ProductIndicativeYield
+    cell = row.createExcelCell(28);
+if(true){
+var res=null;
+e=null;catchError(e) {
+res = tech.invoke(hmGlobals, item, "07MO0472-ConsumptionOfFacing",null,"","","",0)[0];
+    if (null != res) {
+        cell.setCellType("STRING");
+        cell.setStringCellValue(res);
+    }
+    }
+if (e!=null){res=checkString(res,"")+ " - " + e.substring(1,300);cell.setCellType("STRING");cell.setStringCellValue(res);}
+    }
+
+// BUILDING PLASTERS:Product:ProductMixingMethod-ProductMixingMethod
+    cell = row.createExcelCell(29);
+if(true){
+var res=null;
+e=null;catchError(e) {
+res = tech.invoke(hmGlobals, item, "07MO0452-ModeOfMixing",null,"","","",0)[0];
+    if (null != res) {
+        cell.setCellType("STRING");
+        cell.setStringCellValue(res);
+    }
+    }
+if (e!=null){res=checkString(res,"")+ " - " + e.substring(1,300);cell.setCellType("STRING");cell.setStringCellValue(res);}
+    }
+
+// BUILDING PLASTERS:Product:ProductMixingRatio-ProductMixingRatio
+    cell = row.createExcelCell(30);
+if(true){
+var res=null;
+e=null;catchError(e) {
+res = tech.invoke(hmGlobals, item, "07MO0447-PowderWaterRatio",null,"","","",0)[0];
+    if (null != res) {
+        cell.setCellType("STRING");
+        cell.setStringCellValue(res);
+    }
+    }
+if (e!=null){res=checkString(res,"")+ " - " + e.substring(1,300);cell.setCellType("STRING");cell.setStringCellValue(res);}
+    }
+
+// BUILDING PLASTERS:Product:ProductReworkTime-ProductReworkTime
+    cell = row.createExcelCell(36);
+if(true){
+var res=null;
+e=null;catchError(e) {
+res = tech.invoke(hmGlobals, item, "07MO0460-LatencyFor2ndMasterKey",null,"","","",0)[0];
+    if (null != res) {
+        cell.setCellType("STRING");
+        cell.setStringCellValue(res);
+    }
+    }
+if (e!=null){res=checkString(res,"")+ " - " + e.substring(1,300);cell.setCellType("STRING");cell.setStringCellValue(res);}
+    }
+
+// BUILDING PLASTERS:Product:ProductShelfLife-ProductShelfLife
+    cell = row.createExcelCell(31);
+if(true){
+var res=null;
+e=null;catchError(e) {
+res = tech.invoke(hmGlobals, item, "07MO0486-ShelfLife",null,"","","",0)[0]+" " +
+tech.invoke(hmGlobals, item, "07MO0487-ShelfLifeUnit",3,"","","",0)[0];
+    if (null != res) {
+        cell.setCellType("STRING");
+        cell.setStringCellValue(res);
+    }
+    }
+if (e!=null){res=checkString(res,"")+ " - " + e.substring(1,300);cell.setCellType("STRING");cell.setStringCellValue(res);}
+    }
+
+// BUILDING PLASTERS:Product:ProductUsageTime-ProductUsageTime
+    cell = row.createExcelCell(33);
+if(true){
+var res=null;
+e=null;catchError(e) {
+res = tech.invoke(hmGlobals, item, "07MO0454-TimeOfUse",null,"","","",0)[0];
+    if (null != res) {
+        cell.setCellType("STRING");
+        cell.setStringCellValue(res);
+    }
+    }
+if (e!=null){res=checkString(res,"")+ " - " + e.substring(1,300);cell.setCellType("STRING");cell.setStringCellValue(res);}
+    }
+
+}
+// ######## 
+// Category = CEILING AND WALL PANELS
+if (itemCat=="SiniatCeilingWallPanels"){
+// CEILING AND WALL PANELS:Product:ProductSpecificHeatCapacity-ProductSpecificHeatCapacity
+    cell = row.createExcelCell(16);
+if(true){
+var res=null;
+e=null;catchError(e) {
+res = tech.invoke(hmGlobals, item, "05PC0822-SpecificHeat",null,"","","",0)[0];
+    if (null != res) {
+        cell.setCellType("STRING");
+        cell.setStringCellValue(res);
+    }
+    }
+if (e!=null){res=checkString(res,"")+ " - " + e.substring(1,300);cell.setCellType("STRING");cell.setStringCellValue(res);}
+    }
+
+// CEILING AND WALL PANELS:Product:ProductThermalResistance-ProductThermalResistance
+    cell = row.createExcelCell(19);
+if(true){
+var res=null;
+e=null;catchError(e) {
+res = tech.invoke(hmGlobals, item, "05PC0300-ThermalResistance",null,"","","",0)[0];
+    if (null != res) {
+        cell.setCellType("STRING");
+        cell.setStringCellValue(res);
+    }
+    }
+if (e!=null){res=checkString(res,"")+ " - " + e.substring(1,300);cell.setCellType("STRING");cell.setStringCellValue(res);}
+    }
+
+}
+// ######## 
+// Category = GLUED LININGS
+if (itemCat=="SiniatInsulationBoards"){
+// GLUED LININGS:Product:ProductPermeanceClass-ProductPermeanceClass
+    cell = row.createExcelCell(37);
+if(true){
+var res=null;
+e=null;catchError(e) {
+res = tech.invoke(hmGlobals, item, "01AC0012-LongName",null,"","","",0)[0];
+    if (null != res) {
+        cell.setCellType("STRING");
+        cell.setStringCellValue(res);
+    }
+    }
+if (e!=null){res=checkString(res,"")+ " - " + e.substring(1,300);cell.setCellType("STRING");cell.setStringCellValue(res);}
+    }
+
+// GLUED LININGS:Product:ProductSurfaceHardness-ProductSurfaceHardness
+    cell = row.createExcelCell(21);
+if(true){
+var res=null;
+e=null;catchError(e) {
+res = tech.invoke(hmGlobals, item, "05PC0258-SurfaceHardness",null,"","","",0)[0];
+    if (null != res) {
+        cell.setCellType("STRING");
+        cell.setStringCellValue(res);
+    }
+    }
+if (e!=null){res=checkString(res,"")+ " - " + e.substring(1,300);cell.setCellType("STRING");cell.setStringCellValue(res);}
+    }
+
+// GLUED LININGS:Product:ProductThermalConductivityAt20C-ProductThermalConductivityAt20C
+    cell = row.createExcelCell(38);
+if(true){
+var res=null;
+e=null;catchError(e) {
+res = tech.invoke(hmGlobals, item, "05PC0301-ThermalConductivityLambda",null,"","","",0)[0];
+    if (null != res) {
+        cell.setCellType("NUMERIC");
+        cell.setNumericCellValue(toDouble(res));
+    }
+    }
+if (e!=null){res=checkString(res,"")+ " - " + e.substring(1,300);cell.setCellType("STRING");cell.setStringCellValue(res);}
+    }
+
+}
+// ######## 
+// Category = INSULATION
+if (itemCat=="SiniatInsulationBoards"){
+// INSULATION:Product:ProductCompressibilityClass-ProductCompressibilityClass
+    cell = row.createExcelCell(39);
+if(true){
+var res=null;
+e=null;catchError(e) {
+res = tech.invoke(hmGlobals, item, "05PC0565-SCClassification",null,"","","",0)[0];
+    if (null != res) {
+        cell.setCellType("STRING");
+        cell.setStringCellValue(res);
+    }
+    }
+if (e!=null){res=checkString(res,"")+ " - " + e.substring(1,300);cell.setCellType("STRING");cell.setStringCellValue(res);}
+    }
+
+// INSULATION:Product:ProductCompressionResistance-ProductCompressionResistance
+    cell = row.createExcelCell(40);
+if(true){
+var res=null;
+e=null;catchError(e) {
+res = tech.invoke(hmGlobals, item, "05PC0267-ServiceabilityCompressionStrength",null,"","","",0)[0];
+    if (null != res) {
+        cell.setCellType("STRING");
+        cell.setStringCellValue(res);
+    }
+    }
+if (e!=null){res=checkString(res,"")+ " - " + e.substring(1,300);cell.setCellType("STRING");cell.setStringCellValue(res);}
+    }
+
+// INSULATION:Product:ProductCoreCohesion-ProductCoreCohesion
+    cell = row.createExcelCell(41);
+if(true){
+var res=null;
+e=null;catchError(e) {
+res = tech.invoke(hmGlobals, item, "05PC0284-CohesionAndInflexion",null,"","","",0)[0];
+    if (null != res) {
+        cell.setCellType("STRING");
+        cell.setStringCellValue(res);
+    }
+    }
+if (e!=null){res=checkString(res,"")+ " - " + e.substring(1,300);cell.setCellType("STRING");cell.setStringCellValue(res);}
+    }
+
+// INSULATION:Product:ProductDeformation-ProductDeformation
+    cell = row.createExcelCell(42);
+if(true){
+var res=null;
+e=null;catchError(e) {
+res = tech.invoke(hmGlobals, item, "05PC0268-ServiceabilityDeformation",null,"","","",0)[0];
+    if (null != res) {
+        cell.setCellType("STRING");
+        cell.setStringCellValue(res);
+    }
+    }
+if (e!=null){res=checkString(res,"")+ " - " + e.substring(1,300);cell.setCellType("STRING");cell.setStringCellValue(res);}
+    }
+
+// INSULATION:Product:ProductDeformationMax-ProductDeformationMax
+    cell = row.createExcelCell(43);
+if(true){
+var res=null;
+e=null;catchError(e) {
+res = tech.invoke(hmGlobals, item, "05PC0651-ServiceabilityDeformationMaxi",null,"","","",0)[0];
+    if (null != res) {
+        cell.setCellType("STRING");
+        cell.setStringCellValue(res);
+    }
+    }
+if (e!=null){res=checkString(res,"")+ " - " + e.substring(1,300);cell.setCellType("STRING");cell.setStringCellValue(res);}
+    }
+
+// INSULATION:Product:ProductIsole-ProductIsole
+    cell = row.createExcelCell(44);
+if(true){
+var res=null;
+e=null;catchError(e) {
+res = tech.invoke(hmGlobals, item, "05PC0264-ISOLE",null,"","","",0)[0];
+    if (null != res) {
+        cell.setCellType("STRING");
+        cell.setStringCellValue(res);
+    }
+    }
+if (e!=null){res=checkString(res,"")+ " - " + e.substring(1,300);cell.setCellType("STRING");cell.setStringCellValue(res);}
+    }
+
+// INSULATION:Product:ProductThermalConductivityAt20C-ProductThermalConductivityAt20C
+    cell = row.createExcelCell(38);
+if(true){
+var res=null;
+e=null;catchError(e) {
+res = tech.invoke(hmGlobals, item, "05PC0301-ThermalConductivityLambda",null,"","","",0)[0];
+    if (null != res) {
+        cell.setCellType("NUMERIC");
+        cell.setNumericCellValue(toDouble(res));
+    }
+    }
+if (e!=null){res=checkString(res,"")+ " - " + e.substring(1,300);cell.setCellType("STRING");cell.setStringCellValue(res);}
+    }
+
+// INSULATION:Product:ProductThermalResistance-ProductThermalResistance
+    cell = row.createExcelCell(19);
+if(true){
+var res=null;
+e=null;catchError(e) {
+res = tech.invoke(hmGlobals, item, "05PC0300-ThermalResistance",null,"","","",0)[0];
+    if (null != res) {
+        cell.setCellType("STRING");
+        cell.setStringCellValue(res);
+    }
+    }
+if (e!=null){res=checkString(res,"")+ " - " + e.substring(1,300);cell.setCellType("STRING");cell.setStringCellValue(res);}
+    }
+
+}
+// ######## 
+// Category = PLASTER BLOCKS
+if (itemCat=="SiniatPlasterBlocks"){
+// PLASTER BLOCKS:Product:ProductThermalResistance-ProductThermalResistance
+    cell = row.createExcelCell(19);
+if(true){
+var res=null;
+e=null;catchError(e) {
+res = tech.invoke(hmGlobals, item, "05PC0300-ThermalResistance",null,"","","",0)[0];
+    if (null != res) {
+        cell.setCellType("STRING");
+        cell.setStringCellValue(res);
+    }
+    }
+if (e!=null){res=checkString(res,"")+ " - " + e.substring(1,300);cell.setCellType("STRING");cell.setStringCellValue(res);}
+    }
+
+}
+// ######## 
+// Category = PROFILES
+if (itemCat=="SiniatMetalProfiles"){
+// PROFILES:Product:ProductSurfaceTreatment-ProductSurfaceTreatment
+    cell = row.createExcelCell(35);
+if(true){
+var res=null;
+e=null;catchError(e) {
+res = tech.invoke(hmGlobals, item, "04CP0188-Galvanised",null,"","","",0)[0];
+    if (null != res) {
+        cell.setCellType("STRING");
+        cell.setStringCellValue(res);
+    }
+    }
+if (e!=null){res=checkString(res,"")+ " - " + e.substring(1,300);cell.setCellType("STRING");cell.setStringCellValue(res);}
+    }
+
+}
+// ######## 
+}

@@ -1,0 +1,108 @@
+//************************************************ {COPYRIGHT-TOP} ***
+// IBM Confidential
+// OCO Source Materials
+// 5725-E59
+//
+// (c) Copyright IBM Corp. 2000, 2015 All Rights Reserved
+//
+// The source code for this program is not published or otherwise
+// divested of its trade secrets, irrespective of what has been
+// deposited with the U.S. Copyright Office.
+//************************************************ {COPYRIGHT-END} **/
+
+//Function to perform Search on Trade Items
+function searchForPaginatedTradeItems(globalStatus,start,end){
+	var searchParam = "";
+	var hmSearchParameters = [];
+	function getValueOfField(paramName)
+	{
+	    return checkString(inputs[paramName],"") ;
+	}	
+	
+	searchParam = getValueOfField("GTIN");
+	if (searchParam!=null && searchParam.length()>0) {
+			hmSearchParameters["GTIN"] = searchParam;
+	}
+
+	searchParam = getValueOfField("GTIN Name");
+	if (searchParam!=null && searchParam.length()>0) {
+			hmSearchParameters["GTIN_NAME"] = searchParam;
+	}
+
+	searchParam = getValueOfField("Brand Name");
+	if (searchParam!=null && searchParam.length()>0) {
+			hmSearchParameters["BRAND_NAME"] = searchParam;
+	}
+
+	searchParam = getValueOfField("Product Name");
+	if (searchParam!=null && searchParam.length()>0) {
+			hmSearchParameters["PRODUCT_NAME"] = searchParam;
+	}
+
+	searchParam = getValueOfField("Product Description");
+	if (searchParam!=null && searchParam.length()>0) {
+			hmSearchParameters["DESCRIPTION"] = searchParam;
+	}
+
+	searchParam = getValueOfField("Information Provider GLN");
+	if (searchParam!=null && searchParam.length()>0) {
+			hmSearchParameters["IP_GLN"] = searchParam;
+	}
+
+	searchParam = getValueOfField("Information Provider Name");
+	if (searchParam!=null && searchParam.length()>0) {
+			hmSearchParameters["IP_NAME"] = searchParam;
+	}
+
+	searchParam = getValueOfField("DataPool Category Code ");
+	if (searchParam!=null && searchParam.length()>0) {
+			hmSearchParameters["UDEX_CODE"] = searchParam;
+	}
+
+	searchParam = getValueOfField("DataPool Category Code ");
+	if (searchParam!=null && searchParam.length()>0) {
+			hmSearchParameters["UDEX_CATEGORY_DESC"] = searchParam;
+	}
+	
+	searchParam = getValueOfField("Internal Category Code ");
+		if (searchParam!=null && searchParam.length()>0) {
+				hmSearchParameters["INTERNAL_CODE"] = searchParam;
+	}
+
+	searchParam = getValueOfField("Internal Category Description ");
+		if (searchParam!=null && searchParam.length()>0) {
+			hmSearchParameters["INTERNAL_CODE_DESC"] = searchParam;
+	}
+	
+	searchParam = getValueOfField("Product Type ");
+	if (searchParam!=null && searchParam.length()>0) {
+			hmSearchParameters["PRODUCT_TYPE"] = searchParam;
+	}
+	
+	searchParam = getValueOfField("Target Market ");
+	if (searchParam!=null && searchParam.length()>0) {
+			hmSearchParameters["TARGET_MARKET"] = searchParam;
+	}
+
+	searchParam = getValueOfField("Manufacturer GLN");
+	if (searchParam!=null && searchParam.length()>0) {
+			hmSearchParameters["MANUFACTURER_GLN"] = searchParam;
+	}
+
+	searchParam = getValueOfField("Manufacturer Name");
+	if (searchParam!=null && searchParam.length()>0) {
+			hmSearchParameters["MANUFACTURER_NAME"] = searchParam;
+	}
+
+	searchParam = globalStatus;
+	if (searchParam!=null && searchParam.length()>0) {
+			hmSearchParameters["GLOBAL_STATUS"] = searchParam;
+	}
+	
+	var tradeItems = [];
+	catchError(oErr){
+		tradeItems = searchTradeItemsPaginated_SS(hmSearchParameters,start,end);
+	}
+	
+	return tradeItems;
+}

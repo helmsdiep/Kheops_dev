@@ -1,0 +1,14 @@
+function OUT(entrySet, colArea, workflow, step, stepPath)
+{
+  // entrySet: entry set
+  // colArea: collaboration area
+  // workflow: workflow
+  // step: step
+  // stepPath: step path
+
+var statusUpdater = new StatusUpdaterSS();
+				statusUpdater.updateStatusSS(entrySet,"GLOBAL_ENRICHMENT_COMPLETED");
+				var notificationHandler = new NotificationHandlerSS(workflow.getWflName());
+				notificationHandler.notifyUsersForActionWithStatusSS(entrySet,"ITEM_GLOBAL_ENRICHMENT_COMPLETED","GLOBAL_ENRICHMENT_COMPLETED");
+}
+

@@ -1,0 +1,4 @@
+function testSendEmail() {
+var strMailto = "ronan.guevel@etexgroup.com";	
+sendEmail(strMailto,"Notification test Envoi Email", "L'envoi du message a bien été réalisé.\n\n"); 
+}

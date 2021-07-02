@@ -1,0 +1,93 @@
+//************************************************ {COPYRIGHT-TOP} ***
+// IBM Confidential
+// OCO Source Materials
+// 5725-E59
+//
+// (c) Copyright IBM Corp. 2000, 2015 All Rights Reserved
+//
+// The source code for this program is not published or otherwise
+// divested of its trade secrets, irrespective of what has been
+// deposited with the U.S. Copyright Office.
+//************************************************ {COPYRIGHT-END} **/
+
+//********************************************************
+//	MASS TRANSACTION SCRIPT FOR BUYING LIST
+//********************************************************
+
+
+//creating hashmap for search parameters
+
+		var searchParam = "";
+		var hmSearchParameters = [];
+
+//function to read the value of the input field.
+
+		function getValueOfField(paramName) {
+			return checkString(inputs[paramName],"") ;
+		}
+
+////////////////////////////////////////////////////////////////
+//
+//		Populate Values
+//
+/////////////////////////////////////////////////////////////////
+
+		searchParam = getValueOfField("Publication List Name");
+		if (searchParam!=null && searchParam.length()>0) {
+			hmSearchParameters["Publication List Name"] = searchParam;
+		}
+
+		searchParam = getValueOfField("Effective Date");
+		if (null != searchParam) {
+			//var date = new Date(getDateOutputFormat(),searchParam);
+			if(searchParam == ""){
+				searchParam = today().formatDate("dd-MM-yyyy HH:mm");
+			} else {
+			         //FOR DB2 date format 
+				if((searchParam.lastIndexOf("-"))>7){
+					searchParam = reformatDate (searchParam, "yyyy-MM-dd-HH.mm.ss", null,"dd-MM-yyyy HH:mm", null);
+				} else {
+					//FOR ORACLE
+					var date = new Date(getStringValueForClassMember("com.ibm.ccd.common.util.DBConst","JAVA2DB_DATETIME"),searchParam);
+					searchParam = date.formatDate("dd-MM-yyyy HH:mm");
+				}
+			}
+		} else {
+			searchParam = today().formatDate("dd-MM-yyyy HH:mm");
+		}
+		
+		hmSearchParameters["Effective Date"] = searchParam;
+
+		searchParam = getValueOfField("Filter Trade Item(s) Publication To Previously Published Trading Partner");
+		if (searchParam!=null && searchParam.length()>0) {
+			hmSearchParameters["Filter Trade Item(s) Publication To Previously Published Trading Partner"] = searchParam;
+		}
+
+//////////////////////////////////////////////////////////////////////
+//		Create a log file and populate the name to hash map.
+//////////////////////////////////////////////////////////////////////
+
+		logFile = createOtherOut("");
+		logFile.writeln("");
+		logFile.writeln("===============================================================================");
+		logFile.writeln("REPORT TITLE	:	Mass Publication List");
+		logFile.writeln("DATE AND TIME	:	"+today().formatDate("MM-dd-yyyy HH:mm:ss"));
+		logFile.writeln("===============================================================================");
+		logFile.writeln("");
+
+		var logFileName = "/reports/Mass_Publication_List/" +
+					today().formatDate("MM-dd-yyyy HH:mm:ss") + ".log";
+
+		if (logFileName!=null && logFileName.length()>0) {
+			hmSearchParameters["REPORT_LOG_FILE_NAME"]=logFileName;
+		}
+
+		logFile.save(logFileName);
+
+
+//********************************************************
+//
+// Call the script operation to start the mass transaction
+//
+//*********************************************************
+		publishPublicationList(hmSearchParameters);

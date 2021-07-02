@@ -1,0 +1,34 @@
+function mapFields(hmGlobals, item, sheet, rowIndex , tech) {
+    var cell;
+    var row;
+    var cellIndex = 0;
+    var attrDate;
+    var attrString;
+    var attrNum;
+    var en_US = new Locale("en", "US");
+    row = sheet.createRow(rowIndex);
+    rowIndex++;
+    cell = row.createExcelCell(cellIndex);
+    attrString = checkString(tech.invoke(hmGlobals, item, "01AC0019-SdcNatureCode",0,"","","",1)[0],"");
+    if (null != attrString) {
+        cell.setCellType("STRING");
+        cell.setStringCellValue(attrString);
+    }
+    cellIndex++;
+    cell = row.createExcelCell(cellIndex);
+    attrString = checkString(tech.invoke(hmGlobals, item, "01AC0019-SdcNatureCode",1,"","","",1)[0],"");
+    if (null != attrString) {
+        cell.setCellType("STRING");
+        cell.setStringCellValue(attrString);
+    }
+    cellIndex++;
+    cell = row.createExcelCell(cellIndex);
+    attrString = checkString(tech.invoke(hmGlobals, item, "01AC0012-LongName",null,"","","",0)[0],"");
+    if (null != attrString) {
+        cell.setCellType("STRING");
+        cell.setStringCellValue(attrString);
+    }
+    cellIndex++;
+
+    return rowIndex;
+}

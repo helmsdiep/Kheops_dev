@@ -1,0 +1,27 @@
+//************************************************ {COPYRIGHT-TOP} ***
+// IBM Confidential
+// OCO Source Materials
+// 5725-E59
+//
+// (c) Copyright IBM Corp. 2000, 2015 All Rights Reserved
+//
+// The source code for this program is not published or otherwise
+// divested of its trade secrets, irrespective of what has been
+// deposited with the U.S. Copyright Office.
+//************************************************ {COPYRIGHT-END} **/
+
+function setInteroprability(tradeItem){
+	//Get the category tree
+	catTreeIPHierarchy = getCategoryTreeByName("Interoperability_Hierarchy");
+
+	//get the Electronic Gaming category
+	catIP = catTreeIPHierarchy.getCategoryByPath ("Electronic Gaming", "/", true, true); 
+
+	//Get the items from Global_Catalog and Global_Local_Catalog
+	mapItems = tradeItem.getItems();
+	globalItem = mapItems[0];
+	localItem = mapItems[1];
+
+	//Map the local item to the default category from Electronic Gaming Category
+	localItem.mapCtgItemToCategory(catIP, true, false);
+}

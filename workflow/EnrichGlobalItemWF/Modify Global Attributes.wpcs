@@ -1,0 +1,12 @@
+function OUT(entrySet, colArea, workflow, step, stepPath)
+{
+  // entrySet: entry set
+  // colArea: collaboration area
+  // workflow: workflow
+  // step: step
+  // stepPath: step path
+
+var transHandler = new TransactionHandlerSS();
+				transHandler.insertTransactionSS(colArea,entrySet,stepPath,"ITEM_GLOBAL_ENRICHMENT_COMPLETED","GLOBAL_ENRICHMENT_COMPLETED","OUT");
+}
+

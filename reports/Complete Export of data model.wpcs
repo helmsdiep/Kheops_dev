@@ -1,0 +1,63 @@
+//************************************************ {COPYRIGHT-TOP} ***
+// IBM Confidential
+// OCO Source Materials
+// 5725-E59
+//
+// (c) Copyright IBM Corp. 2000, 2015 All Rights Reserved
+//
+// The source code for this program is not published or otherwise
+// divested of its trade secrets, irrespective of what has been
+// deposited with the U.S. Copyright Office.
+//************************************************ {COPYRIGHT-END} **/
+
+envObjList = new EnvObjectList();
+envObjList.addAllObjectsToExport("COMPANY_ATTRIBUTES");
+envObjList.addAllObjectsToExport("MY_SETTINGS");
+envObjList.addAllObjectsToExport("LOOKUP_TABLE_SPEC");
+envObjList.addAllObjectsToExport("LOOKUP_TABLE");
+envObjList.addAllObjectsToExport("LOOKUP_TABLE_CONTENT");
+
+sDocFilePath = "archives/lookup.zip";
+exportEnv(envObjList, sDocFilePath);
+
+envObjList = new EnvObjectList();
+envObjList.addAllObjectsToExport("COMPANY_ATTRIBUTES");
+envObjList.addAllObjectsToExport("MY_SETTINGS");
+envObjList.addAllObjectsToExport("PRIMARY_SPEC");
+envObjList.addAllObjectsToExport("SECONDARY_SPEC");
+envObjList.addAllObjectsToExport("HIERARCHY");
+envObjList.addAllObjectsToExport("HIERARCHY_CONTENT");
+envObjList.addAllObjectsToExport("CATALOG");
+envObjList.addAllObjectsToExport("CATALOG_CONTENT");
+envObjList.addAllObjectsToExport("ATTRIBUTE_COLS");
+envObjList.addAllObjectsToExport("ROLES");
+envObjList.addAllObjectsToExport("CONTAINER_ACCESSPRV");
+
+sDocFilePath = "archives/supply.zip";
+exportEnv(envObjList, sDocFilePath);
+
+envObjList = new EnvObjectList();
+envObjList.addAllObjectsToExport("CATALOG");
+envObjList.addAllObjectsToExport("HIERARCHY_MAPS");
+envObjList.addAllObjectsToExport("MAPS");
+envObjList.addAllObjectsToExport("FEEDS");
+envObjList.addAllObjectsToExport("LOOKUP_TABLE");
+envObjList.addAllObjectsToExport("ATTRIBUTE_COLS");
+envObjList.addAllObjectsToExport("CONTAINER_ACCESSPRV");
+envObjList.addAllObjectsToExport("HIERARCHY");
+envObjList.addAllObjectsToExport("COMPANY_ATTRIBUTES");
+envObjList.addAllObjectsToExport("SPEC");
+envObjList.addAllObjectsToExport("DATASOURCE");
+envObjList.addAllObjectsToExport("USERS");
+envObjList.addAllObjectsToExport("ACG");
+envObjList.addAllObjectsToExport("ROLES");
+envObjList.addAllObjectsToExport("CATALOG_CONTENT");
+envObjList.addAllObjectsToExport("HIERARCHY_CONTENT");
+envObjList.addAllObjectsToExport("LOOKUP_TABLE_CONTENT");
+envObjList.addAllObjectsToExport("DOC_STORE");
+envObjList.addAllObjectsToExport("MY_SETTINGS");
+envObjList.addAllObjectsToExport("DISTRIBUTION");
+envObjList.addAllObjectsToExport("DOC_STORE");
+
+sDocFilePath = "archives/supply_all.zip";
+exportEnv(envObjList, sDocFilePath);

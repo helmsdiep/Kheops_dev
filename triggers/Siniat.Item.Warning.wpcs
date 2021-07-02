@@ -1,0 +1,6 @@
+function getContent(entry){
+var warMsg1= "Warning Message 1";
+var warMsg2= "Warning Message 2";
+var _htmls = "<div id='scriptWrapper' style='height:100px; width:100%;'><h2> Msg1:" + warMsg1+ "</h2> <h2> Msg2:" + warMsg2+ "</h2></div>";
+return _htmls;
+}

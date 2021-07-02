@@ -1,0 +1,2 @@
+var r=getScriptByPath("/scripts/triggers/ReadSAPmsg").getFunctionByName("ReadQueue").invoke();
+out.writeln("Got " + r + " messages from broker.");

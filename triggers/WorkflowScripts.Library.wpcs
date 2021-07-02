@@ -1,0 +1,85 @@
+//************************************************ {COPYRIGHT-TOP} ***
+// IBM Confidential
+// OCO Source Materials
+// 5725-E59
+//
+// (c) Copyright IBM Corp. 2000, 2015 All Rights Reserved
+//
+// The source code for this program is not published or otherwise
+// divested of its trade secrets, irrespective of what has been
+// deposited with the U.S. Copyright Office.
+//************************************************ {COPYRIGHT-END} **/
+
+// This script has functions which are invoked from the GDS Workflows
+//  Returns the current status of the item that is rejected in the 
+//  Global Modify Workflow 
+ 
+function getItemStatusForGlobalModifyReject(entrySet)
+{
+
+   var tradeItemStatus = "MODIFIED_LOCAL";
+    
+    // iterate and get item checkedout in Trade CA
+   forEachEntrySetElement(entrySet, item1) {
+	var originalItem = item1.getOriginalItem();
+	var originalCatalog = originalItem.getCatalog();
+		
+	if (originalCatalog.getCtgName() == "ModifyGlobalItemWF_TradeCatalog_CA") {
+		var globalCatalog = getCtgByName("Global_Catalog");
+		var globalItemPK = originalItem.getCtgItemAttrib("TradeCatalogPrimarySpec/GTIN");
+		var originalGlobalItem = globalCatalog.getCtgItemByPrimaryKey(globalItemPK);
+		
+		tradeItemStatus = originalGlobalItem.getCtgItemAttrib("Global_Attributes_Spec/GDSItemStatus");
+                 if(tradeItemStatus == "Modified Locally"){
+                        tradeItemStatus = "MODIFIED_LOCAL";
+                 }
+                 if(tradeItemStatus == "Registered"){
+                         tradeItemStatus = "REGISTERED";
+                }
+		 if(tradeItemStatus == "Registered - GS1"){
+                        tradeItemStatus = "REGISTERED";
+                }
+		if(tradeItemStatus == "Registered - GS1 Non compliant"){
+                         tradeItemStatus = "REGISTERED";
+                }
+      	}
+     }
+ return tradeItemStatus;
+}
+
+
+//  Returns the current status of the variant that is rejected in the 
+//  Local Modify Workflow 
+
+function getItemStatusForLocalModifyReject(entrySet)
+{
+
+   var tradeItemStatus = "MODIFIED_LOCAL";
+    
+    // iterate and get item checkedout in Trade CA
+   forEachEntrySetElement(entrySet, item1) {
+	var originalItem = item1.getOriginalItem();
+	var originalCatalog = originalItem.getCatalog();
+		
+	if (originalCatalog.getCtgName() == "ModifyItemWF_TradeCatalog_CA") {
+		var localCatalog = getCtgByName("Global_Local_Catalog");
+		var originalLocalItemPK = originalItem.getCtgItemAttrib("TradeCatalogPrimarySpec/GTIN_TM_IP");
+		var originalLocalItem = localCatalog.getCtgItemByPrimaryKey(originalLocalItemPK);
+		tradeItemStatus = originalLocalItem.getCtgItemAttrib("Global_Local_Attributes_Spec/GDSItemStatus");
+
+                 if(tradeItemStatus == "Modified Locally"){
+                        tradeItemStatus = "MODIFIED_LOCAL";
+                 }
+                 if(tradeItemStatus == "Registered"){
+                         tradeItemStatus = "REGISTERED";
+                }
+		 if(tradeItemStatus == "Registered - GS1"){
+                        tradeItemStatus = "REGISTERED";
+                }
+		if(tradeItemStatus == "Registered - GS1 Non compliant"){
+                         tradeItemStatus = "REGISTERED";
+                }
+      	}
+     }
+     return tradeItemStatus;
+}

@@ -1,0 +1,49 @@
+function initGlobals(){
+    var hmGlobalConst = [];
+    hmGlobalConst = getScriptByPath("/scripts/triggers/LG.Library.Const").getFunctionByName("getConst").invoke();
+
+    var hmGlobals = [];
+	hmGlobals["SCRIPT_INITIAL_RULES"]=getScriptByPath("/scripts/triggers/LG.Business.Initial.Rules");	
+    hmGlobals["LOGGER"]=getLogger("Lafarge.Cloner");
+    hmGlobals["FN_GET_ENTRY_NODES_FROM_ATTR_PATH"] = getScriptByPath("/scripts/triggers/LG.Library.LGUtils").getFunctionByName("getEntryNodesFromAttrPath");
+    hmGlobals["FN_GET_ATTRS_TO_CLONE"] = getScriptByPath("/scripts/triggers/LG.Library.LGUtils").getFunctionByName("getAttrsToClone");
+    hmGlobals["FN_MERGE_HASHES"] = getScriptByPath("/scripts/triggers/LG.Library.Utils").getFunctionByName("mergeHashes");
+    hmGlobals["FN_GET_STATUS"] = getScriptByPath("/scripts/triggers/LG.Library.LGUtils").getFunctionByName("getStatus");
+    hmGlobals["FN_SET_STATUS"] = getScriptByPath("/scripts/triggers/LG.Library.LGUtils").getFunctionByName("setStatus");
+    hmGlobals["FN_GET_ITEM_TYPE"]=getScriptByPath("/scripts/triggers/LG.Library.LGUtils").getFunctionByName("getItemType");
+    hmGlobals["FN_GET_CHILD_ITEMS"]=getScriptByPath("/scripts/triggers/LG.Library.LGUtils").getFunctionByName("getChildItems");
+    hmGlobals["FN_GET_PARENT_ITEM"]=getScriptByPath("/scripts/triggers/LG.Library.LGUtils").getFunctionByName("getParentItem");
+    hmGlobals["FN_GET_CONST"]=getScriptByPath("/scripts/triggers/LG.Library.Const").getFunctionByName("getConst");
+   	hmGlobals["FN_GET_ATTRS_TO_INHERIT"] = getScriptByPath("/scripts/triggers/LG.Library.LGUtils").getFunctionByName("getAttrsToInherit");
+    
+    return hmGlobals["FN_MERGE_HASHES"].invoke(hmGlobals,hmGlobalConst);
+}
+
+var hmGlobals=initGlobals();
+
+var type = "Prod";
+var catalog = getCtgByName("C805-Produits hors Siniat - External Siniat products");
+var cat = getCategoryTreeByName(hmGlobals["HIERARCHY_TREE"]).getCategoryByPath(type, "/");
+var sName = catalog.getCtgName();
+
+sName = sName.substring((sName.startsWith("CA") ? 2 : 1 ),sName.length());
+
+ca = getColAreaByName("CA" + sName);
+
+var desc = sName.parseDelim(" - ")[0]; 
+var containerCode = sName.substring(0,3);
+
+oProd = new CtgItem(ca.getColAreaContainer(), false, false, false);
+var sERPCode = getScriptByPath("/scripts/triggers/LG.Library.LGUtils").getFunctionByName("allocateERPCode").invoke(containerCode, type);
+
+oProd.setEntryAttrib("/SC000-GlobPrim/01AC0044-ERPCode", sERPCode);
+oProd.setEntryAttrib("/SC000-GlobPrim/01AC0012-LongName", desc + " - A compléter");
+// oProd.setEntryAttrib("/SC000-GlobPrim/01AC0548-Status", "[CREATION] - En cours de création");
+// oProd.setEntryAttrib("/SC000-GlobPrim/99CTL010-RevNum", 0);
+
+oProd.mapCtgItemToCategory(cat);
+
+out.writeln(oProd);
+
+var test = oProd.saveCtgItem();
+out.writeln(test);

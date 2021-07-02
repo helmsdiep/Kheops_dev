@@ -1,0 +1,216 @@
+//************************************************ {COPYRIGHT-TOP} ***
+// IBM Confidential
+// OCO Source Materials
+// 5725-E59
+//
+// (c) Copyright IBM Corp. 2000, 2015 All Rights Reserved
+//
+// The source code for this program is not published or otherwise
+// divested of its trade secrets, irrespective of what has been
+// deposited with the U.S. Copyright Office.
+//************************************************ {COPYRIGHT-END} **/
+
+//*******************************************************************
+//	MASS TRANSACTION SCRIPT FOR SUBMISSION OF PUBLISH ITEM 
+//*******************************************************************
+
+
+//******************************************************************
+//
+//  MASS JOB ID																					
+//  Fixed as 7 for publish item job.
+//  Please refer the script operation documentation for details.		
+//
+//******************************************************************
+    var massJobID = 7;
+
+
+//creating hashmap for search parameters
+		
+		var searchParam = "";
+		var hmSearchParameters = [];
+
+
+//function to read the value of the input field.
+		
+		function getValueOfField(paramName) {
+			return checkString(inputs[paramName],"") ;
+		}
+
+
+////////////////////////////////////////////////////////////////
+//											
+//		Populate Global Item Search Attributes	
+//											
+/////////////////////////////////////////////////////////////////
+
+
+		searchParam = getValueOfField("GTIN");
+		if (searchParam!=null && searchParam.length()>0) {
+			hmSearchParameters["GTIN"] = searchParam;
+		}
+
+		searchParam = getValueOfField("GTIN Name");
+		if (searchParam!=null && searchParam.length()>0) {
+			hmSearchParameters["GTIN_NAME"] = searchParam;
+		}
+
+		searchParam = getValueOfField("Brand Name");
+		if (searchParam!=null && searchParam.length()>0) {
+			hmSearchParameters["BRAND_NAME"] = searchParam;
+		}
+
+		searchParam = getValueOfField("DataPool Category Code");
+		if (searchParam!=null && searchParam.length()>0) {
+			hmSearchParameters["UDEX_CODE"] = searchParam;
+		}
+
+		searchParam = getValueOfField("DataPool Category Description");
+		if (searchParam!=null && searchParam.length()>0) {
+			hmSearchParameters["UDEX_CATEGORY_DESC"] = searchParam;
+		}
+
+		searchParam = getValueOfField("Internal Product Category Code");
+		if (searchParam!=null && searchParam.length()>0) {
+			hmSearchParameters["INTERNAL_CODE"] = searchParam;
+		}
+
+		searchParam = getValueOfField("Product Type");
+		if (searchParam!=null && searchParam.length()>0) {
+			hmSearchParameters["PRODUCT_TYPE"] = searchParam;
+		}
+	
+
+///////////////////////////////////////////////////////////////////////
+//
+//			Populate Local Item Search Attributes
+//
+//////////////////////////////////////////////////////////////////////
+
+		searchParam = getValueOfField("Product Name");
+		if (searchParam!=null && searchParam.length()>0) {
+			hmSearchParameters["PRODUCT_NAME"] = searchParam;
+		}
+
+		searchParam = getValueOfField("Product Description");
+		if (searchParam!=null && searchParam.length()>0) {
+			hmSearchParameters["PRODUCT_DESCRIPTION"] = searchParam;
+		}
+
+		searchParam = getValueOfField("Information Provider GLN");
+		if (searchParam!=null && searchParam.length()>0) {
+			hmSearchParameters["IP_GLN"] = searchParam;
+		}
+
+		searchParam = getValueOfField("Information Provider Name");
+		if (searchParam!=null && searchParam.length()>0) {
+			hmSearchParameters["IP_NAME"] = searchParam;
+		}
+
+		searchParam = getValueOfField("Target Market");
+		if (searchParam!=null && searchParam.length()>0) {
+			hmSearchParameters["TARGET_MARKET"] = searchParam;
+		}
+
+		searchParam = getValueOfField("ManufacturerGLN");
+		if (searchParam!=null && searchParam.length()>0) {
+			hmSearchParameters["MANUFACTURER_GLN"] = searchParam;
+		}
+
+		searchParam = getValueOfField("ManufacturerName");
+		if (searchParam!=null && searchParam.length()>0) {
+			hmSearchParameters["MANUFACTURER_NAME"] = searchParam;
+		}
+
+
+/////////////////////////////////////////////////////////////////
+//			Set the Type of Publication (intial load/new item)
+/////////////////////////////////////////////////////////////////
+   var publishType = getValueOfField("Publish Type");
+   hmSearchParameters["PUBLISH_TYPE"] = publishType;
+
+
+/////////////////////////////////////////////////////////////
+//			Get the date of publication 
+/////////////////////////////////////////////////////////////
+
+	var pubDate = getValueOfField("Date of Publication");
+	
+	if(null != pubDate) {
+		if(pubDate == "") {
+			pubDate = today().formatDate("dd-MM-yyyy HH:mm");
+		} else {
+			//FOR DB2 date format 
+			if((pubDate.lastIndexOf("-"))>7){
+				pubDate = reformatDate (pubDate, "yyyy-MM-dd-HH.mm.ss", null,"dd-MM-yyyy HH:mm", null);
+			} else {
+				//FOR ORACLE 
+				var date = new Date(getStringValueForClassMember("com.ibm.ccd.common.util.DBConst","JAVA2DB_DATETIME"),pubDate);
+				pubDate = date.formatDate("dd-MM-yyyy HH:mm");
+			}
+		}
+	} else {
+		pubDate = today().formatDate("dd-MM-yyyy HH:mm");
+	}
+	
+	hmSearchParameters["PUBLICATION_DATE"] = pubDate;
+
+
+/////////////////////////////////////////////////////////////////////////////
+//		Get the list of trading partners to whom item to be published
+////////////////////////////////////////////////////////////////////////////
+	tradingPartners = "";
+	tradingPartners = getValueOfField("Trading Partners");
+	tradingPartners = tradingPartners.parseDelim(",");
+	hmSearchParameters["PARTNER_GLN_LIST"]= tradingPartners;
+
+
+//////////////////////////////////////////////////////////////////////
+//		Create a log file and populate the name to hash map.
+//////////////////////////////////////////////////////////////////////
+		
+		logFile = createOtherOut("");
+		
+		logFile.writeln("");
+		logFile.writeln("===============================================================================");
+		logFile.writeln("REPORT TITLE	:	Mass Publish Item");
+		logFile.writeln("DATE AND TIME	:	"+today().formatDate("MM-dd-yyyy HH:mm:ss"));
+		logFile.writeln("===============================================================================");
+		logFile.writeln("");
+		logFile.writeln("WORK IN PROGRESS...");
+                   logFile.writeln(hmSearchParameters);
+
+		var logFileName = "/reports/Mass_Item_Publish/" + 
+					today().formatDate("MM-dd-yyyy HH:mm:ss") + ".log";
+
+		if (logFileName!=null && logFileName.length()>0) {
+			hmSearchParameters["REPORT_LOG_FILE_NAME"]=logFileName;
+		}
+
+		//save the log File
+		logFile.save(logFileName);
+
+//********************************************************
+//
+// Call the script operation to start the mass transaction
+//
+//*********************************************************
+
+//out.writeln(hmSearchParameters["GTIN"]);
+//hmSearchParameters["GTIN"] = "22222222222226";
+var gtin = hmSearchParameters["GTIN"];
+ if(null != gtin)
+ {
+	 var list = gtin.parseCSV();
+	 if( null !=list){
+	    for(i=0;i<list.size();i++){
+	  
+		  hmSearchParameters["GTIN"]=list[i];             
+		  processMassTransactionSS(massJobID,hmSearchParameters);
+	    }
+	  }
+
+ }
+ else {
+	 processMassTransactionSS(massJobID,hmSearchParameters);
+ }

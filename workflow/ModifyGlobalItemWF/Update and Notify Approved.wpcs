@@ -1,0 +1,16 @@
+function OUT(entrySet, colArea, workflow, step, stepPath)
+{
+  // entrySet: entry set
+  // colArea: collaboration area
+  // workflow: workflow
+  // step: step
+  // stepPath: step path
+
+var statusUpdater = new StatusUpdaterSS();
+				statusUpdater.updateTradeItemGlobalStatusSS(entrySet,"MODIFIED_LOCAL");
+				var notificationHandler = new NotificationHandlerSS(workflow.getWflName());
+				notificationHandler.notifyUsersForActionWithStatusSS(entrySet,"MODIFY_GLOBAL_ITEM_APPROVED","MODIFIED_LOCAL");
+				var transHandler = new TransactionHandlerSS();
+				transHandler.insertTransactionSS(colArea,entrySet,stepPath,"MODIFY_GLOBAL_ITEM_APPROVED","MODIFIED_LOCAL","OUT");
+}
+

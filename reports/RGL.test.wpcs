@@ -1,0 +1,4 @@
+var dAttrValue = new Date("yyyyMMdd", "20171203");
+out.writeln("dAttrValue="+dAttrValue);
+logDebug("dAttrValue="+dAttrValue);
+logDebug("Ronan Batch");
