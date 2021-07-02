@@ -1,0 +1,1207 @@
+//
+// InfoSphere MDM Collaboration Server
+//
+// ---------------------------------------------------------------------------------------------
+// Name            : Default Search Results Script V3.1
+// Description     : Sample script to generate a report of the search result entry set.
+//                   Support Microsoft Excel 2007 xlsx format.
+// ---------------------------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------------------------
+// Name            : updateHighRowIndex()
+// Description     : Update the highest row index value in the hashmap
+//					 Set the current rowIndex as the highest if it is greater than the current
+//					 high index
+// Input Param					 
+// @rowIndex  	   : The current rowIndex
+// @printGroupHm   : The Hashmap that contains rowIndex and atttribute mappings	
+// Return Values   : The occurrence
+// ---------------------------------------------------------------------------------------------
+function updateHighRowIndex(rowIndex,printGroupHm)
+{
+	var current_high_rowIndex = printGroupHm["high_rowIndex"] ;
+	if ( current_high_rowIndex == null)
+	{
+		current_high_rowIndex = rowIndex;
+	}
+	else
+	{
+		if (current_high_rowIndex > rowIndex)
+		{
+			// don't do anything
+		}
+		else
+		{
+			current_high_rowIndex = rowIndex;
+		}
+	}
+	printGroupHm["high_rowIndex"] = current_high_rowIndex;
+
+}
+// ---------------------------------------------------------------------------------------------
+// Name            : getNodeCellIndex()
+// Description     : Locate the excel Cell index where this node is written
+// Input Param					 
+// @nodePath  	   : The entire node Path whose index we want to find
+// @printGroupHm   : The Hashmap that contains rowIndex and atttribute mappings	
+// Return Values   : The cell Index
+// ---------------------------------------------------------------------------------------------
+function getNodeCellIndex(attributeHm,nodePath)
+{
+    // get the cellIndex corresponding to this nodePath
+    if ( attributeHm.containsValue(nodePath+"CELLINDEX"))
+    {
+        return attributeHm.keyForValue(nodePath+"CELLINDEX");
+    }
+    else
+    {
+        return -1 ;
+    }
+}
+// ---------------------------------------------------------------------------------------------
+// Name            : isNodePathRequested()
+// ---------------------------------------------------------------------------------------------
+function isNodePathRequested(nodePath,printGroupHm)
+{
+    var attributes = printGroupHm["ATTRIBUTESVIEW"];
+    for ( var i = 0 ; i < attributes.size() ; i ++ )
+    {
+        if ( attributes[i].startsWith (nodePath) )
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+// ---------------------------------------------------------------------------------------------
+// Name            : printExcelCellValue()
+// Description     : Print a given value at a given row. Compute the cell Index by calling
+//					 @getNodeCellIndex. Also update the high row Index
+// Input Param					 
+// @nodePath  	   : The entire node Path whose index we want to find
+// @printGroupHm   : The Hashmap that contains rowIndex and atttribute mappings	
+// Return Values   : The cell Index
+// ---------------------------------------------------------------------------------------------
+function printExcelCellValue(rowIndex,printGroupHm,attributeHm,sheet,node,value,item, childEntryNode)
+{
+    var row = sheet.getExcelRow(rowIndex); 
+	if(row==null)
+	{
+	  row=sheet.createRow(rowIndex);
+	}
+	var cellIndex = getNodeCellIndex(attributeHm,node.getNodePath());
+	// print only when cell Index is not -1
+	if ( cellIndex != -1)
+	{
+		var cell = row.createExcelCell(toInteger(cellIndex));
+		// now get the data type of this node in wpc
+		var nodeType = node.getNodeAttributeValue("TYPE");
+		if ( checkString(node.getNodeAttributeValue("LINK_TO_CATALOG"), "") == "yes" && value != null )
+		{
+			var path = childEntryNode.getEntryNodeExactPath();
+			value = item.getLinkedItemAttributeValueForNode(path);
+		}
+		var numberType =  ( nodeType == "NUMBER" || nodeType == "INTEGER" ) ;
+		if (nodeType == "DATE")
+		{
+				cell.setCellType("STRING"); 
+				cell.setStringCellValue(checkString(value,""));
+		}
+		//Commented to address the POI defect
+		// Once the POI defect is resolved the else if block can be uncommented
+		//else if (nodeType == "CURRENCY" )	
+		//{		     
+		//	cell.setCellType("NUMERIC"); 
+		//      var book = printGroupHm["EXCELBOOK"];
+		//      var style = book.createExcelCellStyle();
+		//      style.setDataFormat("0.00");
+		//      cell.setExcelStyle(style);
+		//      cell.setNumericCellValue(checkDouble(value,0.0));
+		//}
+		else
+		{
+			cell.setCellType("STRING"); 
+            // is the spec node of type relationship?.Then append the catalog name and 
+		    if ( nodeType == "RELATIONSHIP" && value != null)
+            {
+				var e = null;
+				catchError(e)
+				{
+					var path = childEntryNode.getEntryNodeExactPath();
+					var relationInfo =  item.getEntryRelationshipAttrib(path);
+					var ctgName = checkString(relationInfo[0], "");
+					var pkValue = checkString(relationInfo[1], "");
+
+					var ctg = getCtgByName(ctgName); 
+					var item = ctg.getCtgItemByPrimaryKey(pkValue);
+					var dispValue = item.getDisplayValue(getUserLocale());
+
+					//Start with the default value and override with display format, if available.
+					//Note that in RichSearchReport, value was always returned as 'ctgName>>pkName"
+					value = ctgName + " > " + pkValue;
+					var relnDispFormat = node.getNodeAttributeValue("RELATIONSHIP_VALUE_DISPLAY_FORMAT");
+					if (relnDispFormat != null && relnDispFormat != "")
+					{
+						if (relnDispFormat == "PK"){
+							value = pkValue;
+						}
+						else if (relnDispFormat == "DISPATTRIB") 
+						{
+							if (dispValue == "") {
+								dispValue = pkValue;
+							}
+							value = dispValue;
+						}
+						else if (relnDispFormat == "PK_DISPATTRIB")
+						{
+							if (dispValue == "") {
+								dispValue = pkValue;
+							}
+							value = pkValue + " > " + dispValue;
+						}
+						else if (relnDispFormat == "CTGNAME_PK") {
+							value = ctgName + " > " + pkValue;
+						}
+						else if (relnDispFormat == "CTGNAME_DISPATTRIB")
+						{
+							if (dispValue == "") {
+								dispValue = pkValue;
+							}
+							value = ctgName + " > " + dispValue;
+						}
+						else if (relnDispFormat == "CTGNAME_PK_DISPATTRIB")
+						{
+							if (dispValue == "") {
+								dispValue = pkValue;
+							}
+							value = ctgName + " > " + pkValue + " > " + dispValue;
+						}
+					}
+					cell.setStringCellValue(checkString(value,""));
+				}
+				if (e != null)
+				{
+					cell.setStringCellValue("referenced Item no longer exists");
+				}
+            }
+            else if (nodeType == "LOOKUP_TABLE" && value != null)
+            {
+                var lkpTableName = node.getNodeLookupTableName();
+                if (lkpTableName != null && lkpTableName != "")                
+                {
+                    var lkpDispFormat = node.getNodeAttributeValue("LOOKUP_TABLE_VALUE_DISPLAY_FORMAT");
+                    var lkpDispAttr = node.getNodeAttributeValue("LOOKUP_TABLE_VALUE_DISPLAY_ATTRIBUTE");
+                    if (lkpDispFormat != null && lkpDispFormat != "")
+                    {
+                        var ctg = getCtgByName(lkpTableName);
+                        var item = ctg.getCtgItemByPrimaryKey(value);
+                        var dispAttrValue = "";
+                        var dispAttrValueFromLookup = "";
+                        if (lkpDispAttr != null && lkpDispAttr != "") {
+                            dispAttrValue = checkString(item.getCtgItemAttrib(ctg.getCtgSpec(true).getSpecName() + "/" + lkpDispAttr),"");
+                        }
+                        if (dispAttrValue == "") {
+                        	dispAttrValueFromLookup=checkString(lookup(lkpTableName,value),"?");
+                        }
+                        
+                        if (lkpDispFormat == "PK") {
+                            //nothing to do, use the value which is pk by default
+                        }
+                        else if (lkpDispFormat == "DISPATTRIB") {
+                            if (dispAttrValue != "") {
+                            	value = dispAttrValue+"|"+lkpDispAttr;
+                            } else {
+                            	value = value+"|"+dispAttrValueFromLookup;
+                            }
+                        }
+                        else if (lkpDispFormat == "PK_DISPATTRIB")
+                        {
+                            if (dispAttrValue != "") {
+                                value = value + " > " + dispAttrValue;
+                            }
+                        }
+                        else if (lkpDispFormat == "LKPNAME_PK") {
+                            value = lkpTableName + " > " + value;
+                        }
+                        else if (lkpDispFormat == "LKPNAME_DISPATTRIB")
+                        {
+                            if (dispAttrValue != "") {
+                                value = lkpTableName + " > " + dispAttrValue;
+                            }
+                            else
+                            {
+                                value = lkpTableName + " > " + value;
+                            }
+                        }
+                        else if (lkpDispFormat == "LKPNAME_PK_DISPATTRIB")
+                        {
+                            value = lkpTableName + " > " + value;
+                            if (dispAttrValue != "") {
+                                value = value + " > " + dispAttrValue;
+                            }
+                        }
+                    }
+                }
+                cell.setStringCellValue(checkString(value,"")); 
+            }
+            else
+            {
+      			cell.setStringCellValue(checkString(value,""));	
+            }
+		}
+		updateHighRowIndex(rowIndex,printGroupHm);
+	}
+}
+// ---------------------------------------------------------------------------------------------
+// Name            : calculateMultiOccurNode()
+// Description     : Calculates the maximum rowIndex that will be taken if all the child
+//					 elements were printed.
+//					 This will be useful when you have to calculate the next occurrence of 
+//					 a given grouping attribute
+//					 For e.g given node grp1#0 (a grouping node), this function will calculate
+//					 the rowIndex where grp1#1 can be printed
+// Input Param					 
+// @node1  		   : The node whose successor's rowIndex you want to compute
+// @item		   : The current item in the itemset 
+// @printGroupHm   : The Hashmap that contains rowIndex and atttribute mappings	
+// Return Values   : Return the rowIndex where the successor will be printed
+// ---------------------------------------------------------------------------------------------
+function calculateMultiOccurNode(item,node1,printGroupHm)
+{
+    var rootEntryNode = item.getRootEntryNode();
+    var entryNodes = rootEntryNode.getEntryNodes(node1.getNodePath());
+    var itemCount = printGroupHm["itemCount"];
+    for ( var i = 0 ; i < entryNodes.size() ; i ++ )
+    {    
+        var entryNodePath = entryNodes[i].getEntryNodeExactPath();
+        var inputPath = printGroupHm["entryNodePath"] ;
+        // Now this entryNodePath may not be required to be printed
+        // because it's path is not part of this view???
+        var nodePath = entryNodes[i].getNodeFromEntryNode().getNodePath();
+        var isEntryNodePathRequested = isNodePathRequested(nodePath,printGroupHm);
+        var innerGroup = printGroupHm["INNERGROUP"];
+        if ( entryNodePath.startsWith(inputPath + "/") && isEntryNodePathRequested && innerGroup[itemCount + "##" + entryNodePath] == null )
+        {
+            // Now this could inner Group's so we need to take the max of the inner groups
+            printGroupHm["rowCount"] = toInteger(printGroupHm["rowCount"]) + 1 ;
+            innerGroup[itemCount + "##" + entryNodePath] = true;
+            printGroupHm["INNERGROUP"] = innerGroup;
+        }
+    }
+}
+// ---------------------------------------------------------------------------------------------
+// Name            : calculateMaxCount()
+// Description     : Calculates the maximum rowIndex that will be taken if all the child
+//					 elements were printed.
+//					 This will be useful when you have to calculate the next occurrence of 
+//					 a given grouping attribute
+//					 For e.g given node grp1#0 (Top most group), this function will calculate
+//					 the rowIndex where grp1#1 can be printed
+// Input Param					 
+// @specEntryNode  : The entryNode
+// @item		   : The current item in the itemset 
+// @printGroupHm   : The Hashmap that contains rowIndex and atttribute mappings	
+// Return Values   : Return the rowIndex where the successor will be printed
+// ---------------------------------------------------------------------------------------------
+
+function calculateMaxCount(specEntryNode,printGroupHm,item)
+{
+    var group = specEntryNode.getEntryNodeChildren();
+    var count = null; 
+    for ( var i = 0 ; i < group.size() ; i ++ )
+    {
+        var exactPath = group[i].getEntryNodeExactPath();
+        var node = group[i].getNodeFromEntryNode();
+        if ( node.isNodeGrouping())
+        {
+            calculateMaxCount(group[i],printGroupHm,item);
+        }
+        else
+        {
+            calculateMultiOccurNode(item,node,printGroupHm);	
+            var innerGroup = printGroupHm["INNERGROUP"] ;
+            var inputPath = printGroupHm["entryNodePath"] ;
+            var sizeHm = innerGroup[inputPath+"$$$$"+node.getNodePath()];
+            if ( sizeHm == null )
+            {
+                sizeHm = [];
+                sizeHm["NODEPATH"] = node.getNodePath();
+                sizeHm["SIZE"] = printGroupHm["rowCount"] ;
+                innerGroup[inputPath+"$$$$"+node.getNodePath()] = sizeHm;
+                printGroupHm["INNERGROUP"] = innerGroup;
+                printGroupHm["rowCount"] = 0;
+            }  
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------------------------
+// Name            : isNodePathSpecName()
+// Description     : Locates the row Index for the parent of a given attribute
+//					 For e.g if the entryNode path passed is /TestSpec/grp1#0/grp1-grp1-1#0
+//					 this function returns the rowIndex where /TestSpec/grp1#0 was printed
+//					 This would be needed because the current node's zero (0) th occurence has 
+//					 to start at the exact row where parent was printed
+// Input Param					 
+// @ entryNodePath : The entry Node Path whose parent we are interested
+// @ item		   : The item 
+// @ printGroupHm  : The Hashmap that contains rowIndex and atttribute mappings	
+// Return Values   : Return the rowIndex where the parent was printed
+// ---------------------------------------------------------------------------------------------
+function isNodePathSpecName(item,nodePath)
+{
+    var rootEntryNode = item.getRootEntryNode();
+    var entryNodes= rootEntryNode.getEntryNodeChildren();
+    for( var i = 0; i < entryNodes.size(); i++)
+    {
+        var entryNode = entryNodes[i];
+        var specName  = entryNode.getNodeFromEntryNode().getNodePath();
+        if ( nodePath == specName)
+        {
+            return true;
+        }
+    }	
+    return false;
+}
+// ---------------------------------------------------------------------------------------------
+// Name            : getSpecNodeByPath()
+// Description     : returns the node object represented by this attribute path
+// Input Param					 
+// @attribute      : The attribute whose spec node we want to find
+// Return Values   : none
+// ---------------------------------------------------------------------------------------------
+function getSpecNodeByPath( attribute )
+{
+    var specName = attribute.parseFixedWidth(0,attribute.indexOf("/"));
+    var spec = getSpecByName(specName);
+    return spec.getNodeByPath(attribute);
+}
+// ---------------------------------------------------------------------------------------------
+// Name            : getRowIndexFromEntryNodePath()
+// Description     : Returns the rowIndex where the parent group of this attribute was
+//					 printed.
+// Input Param					 
+// @childEntryNodePath : The path whose parentGroups rowindex we are interested
+// @printGroupHm   : The Hashmap that contains rowIndex and atttribute mappings		
+// Return Values   : rowIndex
+// ---------------------------------------------------------------------------------------------	
+function getRowIndexFromEntryNodePath(childEntryNodePath,printGroupHm)
+{
+	var itemCount = printGroupHm["itemCount"];
+	var groupPath = childEntryNodePath.parseFixedWidth(0,childEntryNodePath.lastIndexOf("/"));
+	return printGroupHm[itemCount + "$" + groupPath];
+}
+// ---------------------------------------------------------------------------------------------
+// Name            : isAttributeAtParentLevel()
+// Description     : Checks if a given node is a parent level attribute or one under a 
+//					 grouping node.
+// Input Param					 
+// @node 		   : The node 
+// @printGroupHm   : The Hashmap that contains rowIndex and atttribute mappings	
+// @item		   : The current item
+// Return Values   : rowIndex
+// ---------------------------------------------------------------------------------------------
+function isAttributeAtParentLevel(node , printGroupHm, item )
+{
+    var localizedNode = node.getNodeLocale();
+    var nodePath  = node.getNodePath();
+    nodePath = nodePath.parseFixedWidth(0,nodePath.lastIndexOf("/"));
+    if ( localizedNode != null && checkString(localizedNode,"") != "" )
+    {
+		nodePath = nodePath.parseFixedWidth(0,nodePath.lastIndexOf("/"));
+    }
+    return isNodePathSpecName(item,nodePath);
+}
+// ---------------------------------------------------------------------------------------------
+// Name            : processAttribute()
+// Description     : Process a attribute (Not a group)
+//					 print only children that belong to the current group in focus
+//					 For a node like this grp1/grp1-1#0, print's only the elements that come
+//					 under the 0th occurrence and not any other occurrence
+// Input Param					 
+// @item  	   	   : The item
+// @childNode  	   : The node being processed
+// @printGroupHm   : The Hashmap that contains rowIndex and atttribute mappings	
+// @sheet		   : The excel sheet where attributes are to be printed
+// Return Values   : none
+// ---------------------------------------------------------------------------------------------
+function processAttribute(item,childNode,printGroupHm,attributeHm,sheet)
+{
+    // now check if this node is  a multi occur one??
+    var isNodeMultiOccurence = (childNode.getNodeAttributeValue("MAX_OCCURRENCE") > 1);
+    var itemCount = printGroupHm["itemCount"];
+    var rowIndex = printGroupHm["high_rowIndex"];
+	var currentGroupInFocus = printGroupHm["CURRENTGROUP"] ;
+    if ( currentGroupInFocus == null )
+    {
+    	currentGroupInFocus = "NULL";
+    }
+
+    if ( rowIndex == null )
+    {
+    	rowIndex = 0 ; 
+    }
+    if ( isNodeMultiOccurence )
+    {
+        var rootEntryNode = item.getRootEntryNode();
+        var entryNodes = rootEntryNode.getEntryNodes(childNode.getNodePath());
+        for ( var i = 0 ; i < entryNodes.size(); i ++ )
+        {
+            var childEntryNode = entryNodes[i];
+            var childEntryNodePath  = childEntryNode.getEntryNodeExactPath();
+			var occurrence = childEntryNodePath.parseFixedWidth(childEntryNodePath.lastIndexOf("#")+1,
+																childEntryNodePath.length());
+            if ( printGroupHm [itemCount + "#" + childEntryNodePath] == null )
+            {
+	            if ( childEntryNodePath .startsWith(currentGroupInFocus))
+	            {
+					if ( occurrence == 0 )
+					{	            	
+	            		rowIndex = getRowIndexFromEntryNodePath(childEntryNodePath,printGroupHm);
+	            	}
+	            	else
+	            	{
+	            		rowIndex = rowIndex + 1 ;
+	            	}
+                                    if(childNode.isNodeNonPersisted())
+                                    {
+                                        childEntryNode.populateNonPersistedForEntryNode();
+                                    }
+				    var cellValue  = childEntryNode.getEntryNodeValue();
+					printExcelCellValue(rowIndex,printGroupHm,attributeHm,sheet,childNode,cellValue,item, childEntryNode);				
+					printGroupHm[itemCount + "#"  + childEntryNodePath]  = true;
+	            } // only when its current gorup in focus
+	            // this could be an attribute at the parent Level
+	            var innerChildNode = childEntryNode.getNodeFromEntryNode();
+	            var isAttributeAtParentLevel = isAttributeAtParentLevel(innerChildNode, printGroupHm, item );
+	            if ( isAttributeAtParentLevel )
+	            {
+                                    if(childNode.isNodeNonPersisted())
+                                    {
+                                        childEntryNode.populateNonPersistedForEntryNode();
+                                    }
+				    var cellValue  = childEntryNode.getEntryNodeValue();
+				    if ( itemCount == 0)
+				    {
+				    	if ( occurrence == 0 )
+				    	{
+				    		rowIndex = 1 ;
+				    	}
+				    	else
+				    	{
+				    		rowIndex = rowIndex + 1 ;
+				    	}
+				    }
+				    else
+				    {
+				    	if ( occurrence == 0 )
+				    	{
+				    		rowIndex = printGroupHm["ITEM"+(itemCount - 1)+"MAXROWINDEX"];
+				    	}
+				    	else
+				    	{
+				    		rowIndex = rowIndex + 1 ;
+				    	}
+				    }
+					printExcelCellValue(rowIndex,printGroupHm,attributeHm,sheet,childNode,cellValue,item,childEntryNode);				
+					printGroupHm[itemCount + "#"  + childEntryNodePath]  = true;
+				}
+	       }// only when not already printed
+        }// for each occurrence of the entry node
+    }
+    else
+    {
+		var rootEntryNode = item.getRootEntryNode();
+		
+		var entryNodes = rootEntryNode.getEntryNodes(childNode.getNodePath());
+		if ( entryNodes.size() > 1 )
+		{
+			for ( var i = 0 ; i < entryNodes.size() ;  i ++ )
+			{
+			    var entryNode = entryNodes[i];
+			    var ePath = entryNode.getEntryNodeExactPath();
+				if ( printGroupHm[itemCount + "#"  + ePath]  == null  &&
+					 ePath.startsWith(currentGroupInFocus))			    
+				{
+			    	// ------------Now Locate the rowIndex for each of these attribs -----
+					var rowIndex = getRowIndexFromEntryNodePath(ePath,printGroupHm);
+					if ( rowIndex != null )			    	
+					{
+					if(childNode.isNodeNonPersisted())
+					{
+						entryNode.populateNonPersistedForEntryNode();
+					}
+				    	var cellValue = entryNode.getEntryNodeValue();
+						printExcelCellValue(rowIndex,printGroupHm,attributeHm,sheet,childNode,cellValue,item,entryNode);				
+						printGroupHm[itemCount + "#"  + ePath]  = true;
+					}
+				} // only when not already printed
+			} // for each of the child entry Nodes
+		}
+		else
+		{
+			if ( printGroupHm[itemCount + "#"  + childNode.getNodePath()]  == null )
+			{
+				if ( itemCount == 0 )
+				{
+		    		rowIndex = 1;
+		    	}
+		    	else
+		    	{
+		    		rowIndex = printGroupHm["ITEM"+(itemCount - 1)+"MAXROWINDEX"];
+		    	}
+		    	var localizedNode = childNode.getNodeLocale();
+			    var nodePath = childNode.getNodePath();
+                if (childNode.isNodeNonPersisted() && entryNodes.size()==1)
+                {
+                    entryNodes[0].populateNonPersistedForEntryNode();
+                }
+
+                var err = null;
+                var cellValue = null;
+                catchError(err) {
+                    cellValue = item.getCtgItemAttrib(nodePath);
+                }
+                if (err != null) {
+                    cellValue = "";
+                }
+
+				printExcelCellValue(rowIndex,printGroupHm,attributeHm,sheet,childNode,cellValue,item, entryNodes[0]);				
+				printGroupHm[itemCount + "#"  + childNode.getNodePath()]  = true;
+			}
+		}
+    }
+
+}
+// ---------------------------------------------------------------------------------------------
+// Name            : locateGroupOccurrencesForNodePath()
+// Description     : Process a attribute (Not a group)
+//					 print only children that belong to the current group in focus
+//					 For a node like this grp1/grp1-1#0, print's only the elements that come
+//					 under the 0th occurrence and not any other occurrence
+// Input Param					 
+// @item  	   	   : The item
+// @childNode  	   : The node being processed
+// @printGroupHm   : The Hashmap that contains rowIndex and atttribute mappings	
+// @sheet		   : The excel sheet where attributes are to be printed
+// Return Values   : none
+// ---------------------------------------------------------------------------------------------
+function locateGroupOccurrencesForNodePath(path,item)
+{
+    var rootEntryNode = item.getRootEntryNode();
+    path = path.parseFixedWidth(0,path.lastIndexOf("/"));
+    var entryNodes = rootEntryNode.getEntryNodes(path);
+    var groupOccurrences = [];
+    for ( var i = 0 ; i < entryNodes.size() ; i ++ )
+    {
+        groupOccurrences[i] = entryNodes[i].getEntryNodeExactPath();
+    }    
+    return groupOccurrences;
+}
+// ---------------------------------------------------------------------------------------------
+// Name            : locateRowIndexForParent()
+// Description     : Locates the row Index for the parent of a given attribute
+//					 For e.g if the entryNode path passed is /TestSpec/grp1#0/grp1-grp1-1#0
+//					 this function returns the rowIndex where /TestSpec/grp1#0 was printed
+//					 This would be needed because the current node's zero (0) th occurence has 
+//					 to start at the exact row where parent was printed
+// Input Param					 
+// @ entryNodePath : The entry Node Path whose parent we are interested
+// @ item		   : The item 
+// @ printGroupHm  : The Hashmap that contains rowIndex and atttribute mappings	
+// Return Values   : Return the rowIndex where the parent was printed
+// ---------------------------------------------------------------------------------------------
+function locateRowIndexForParent(entryNodePath ,item ,printGroupHm,sheet)
+{
+	var parentPath = entryNodePath.parseFixedWidth(0,entryNodePath.lastIndexOf("/"));
+
+	var rootEntryNode = item.getRootEntryNode();
+	var specEntryNode = rootEntryNode.getEntryNode(entryNodePath);
+
+    var specNode = specEntryNode.getNodeFromEntryNode();
+    var localizedNode = specNode.getNodeLocale();
+    if ( localizedNode != null && checkString(localizedNode,"") != "" )
+    {
+    	parentPath = parentPath.parseFixedWidth(0,parentPath.lastIndexOf("/"));
+    }
+	var itemCount = printGroupHm["itemCount"];
+	var isSpecName = isNodePathSpecName(item,parentPath.parseFixedWidth(1,parentPath.length()));
+	if ( isSpecName )
+	{
+		return -1;
+	}
+	else
+	{
+		if ( printGroupHm[itemCount+"$"+parentPath] != null )
+		{
+			return printGroupHm[itemCount+"$"+parentPath];
+		}
+	}
+	return -1;
+}
+
+// ---------------------------------------------------------------------------------------------
+// Name            : printGroupingNodeOccurrences()
+// Description     : Print all child grouping nodes within a group node
+//					 For e.g for entry Path like /TestSpec/grp1#0
+//					 prints all child group elements under this group but not  under /TestSpec/grp1#1
+// Input Param					 
+// @ entryNodePath : The entry Node Path whose siblings we want to print
+// @ item		   : The item 
+// @ printGroupHm  : The Hashmap that contains rowIndex and atttribute mappings	
+// @sheet		   : The excel sheet where attributes are to be printed
+// @groupOccurrencesSize : No of occurrences of this element
+// Return Values   : Return the rowIndex where the parent was printed
+// ---------------------------------------------------------------------------------------------
+function printGroupingNodeOccurrences( entryNodePath,item,printGroupHm,attributeHm,
+									groupOccurrencesSize,sheet )
+{
+	var itemCount = printGroupHm ["itemCount"];
+	// get the current high_row_index
+    var rowIndex = printGroupHm["high_rowIndex"];
+    if ( rowIndex == null )
+    {
+    	rowIndex = 0 ;
+    }
+    
+    var rootEntryNode = item.getRootEntryNode();
+	
+	var lastIndexOfHash = entryNodePath.lastIndexOf("#");
+	var occurrence = 0;
+	if ( lastIndexOfHash != -1 )
+	{
+		var subString = entryNodePath.parseDelim("#")[1];
+		if(subString.contains("/"))
+		{
+			var array = subString.parseDelim("/");
+			subString = array[0];
+		}
+		occurrence = toInteger(subString);
+	}
+	
+	var parentIndex = locateRowIndexForParent(entryNodePath,item,printGroupHm,sheet);
+	if ( itemCount == 0  )
+	{	
+		var parentPath = entryNodePath.parseFixedWidth(0,entryNodePath.lastIndexOf("/"));
+		if(occurrence == 0)
+		{
+			if ( parentIndex != -1)
+			{
+				// get the predecessor's value
+				var parentPath = entryNodePath.parseFixedWidth(0,entryNodePath.lastIndexOf("/"));
+				rowIndex = printGroupHm[itemCount+"$"+parentPath] ;		
+				printGroupHm[itemCount+"$"+entryNodePath] =  rowIndex;
+			}
+			else
+			{
+				rowIndex = 1;
+				printGroupHm[itemCount+"$"+entryNodePath] = rowIndex;						
+			}
+		}
+	
+		else
+		{
+				if ( parentIndex != -1)
+				{
+					// get the predecessor's value
+					rowIndex = printGroupHm[itemCount+"$"+parentPath] ;		
+					printGroupHm[itemCount+"$"+entryNodePath] =  rowIndex;
+				}
+				else
+				{
+					rowIndex = printGroupHm["index"];
+					printGroupHm[itemCount+"$"+entryNodePath] = rowIndex;						
+				}
+		}
+	}
+	else
+	{
+		if ( parentIndex != -1)
+		{
+			printGroupHm[itemCount+"$"+entryNodePath] = parentIndex;						
+			rowIndex = parentIndex;
+		}
+		else
+		{
+			rowIndex = 	printGroupHm["ITEM"+(itemCount - 1)+"MAXROWINDEX"];	
+			printGroupHm[itemCount+"$"+entryNodePath] = rowIndex;
+		}	
+	}
+	
+	for ( var i = 0 ; i < groupOccurrencesSize ; i ++ )
+	{
+		var cellValue = ("#"+(i+1)+"");
+		rowIndex = printGroupHm[itemCount+"$"+entryNodePath];
+		var entryNode =  rootEntryNode.getEntryNode(entryNodePath);
+		if (entryNode != null )
+		{
+			var node = entryNode.getNodeFromEntryNode();
+			var isNodeMultiOccurence = (node.getNodeAttributeValue("MAX_OCCURRENCE") > 1);
+			if(!isNodeMultiOccurence)
+			{
+				var cellValue = ("#"+1+"");
+			}
+			printExcelCellValue(rowIndex,printGroupHm,attributeHm,sheet,node,cellValue,item,entryNode);
+			
+			// -----------------------------------------------------
+			// now increment the occurrence in the entryNodePath
+			// e.g if entryNodePath = "TestSpec/grp1#0, increment to 
+			//                        "TestSpec/grp1#1
+			//-------------------------------------------------------
+			
+			var subString1 = entryNodePath.parseFixedWidth(0, entryNodePath.lastIndexOf("#"));
+			var specEntryNode = null;
+			if(!subString1.contains("#"))
+			{
+				var subString = entryNodePath.parseFixedWidth(0, entryNodePath.lastIndexOf("/"));
+				if(!isNodePathSpecName(item, subString.parseFixedWidth(1, subString.length())))
+				{
+					if(rootEntryNode.getEntryNode(subString).getNodeFromEntryNode().isNodeGrouping())
+					{
+						var specEntryNode = rootEntryNode.getEntryNode(subString);
+						printGroupHm["rowCount"] = 0;
+						printGroupHm["entryNodePath"] = subString;
+					}
+				}
+				else
+				{
+					var specEntryNode = rootEntryNode.getEntryNode(entryNodePath);
+					printGroupHm["rowCount"] = 0;
+					printGroupHm["entryNodePath"] = entryNodePath;
+				}
+			}
+			else
+			{
+				specEntryNode = rootEntryNode.getEntryNode(entryNodePath);
+				printGroupHm["rowCount"] = 0;
+				printGroupHm["entryNodePath"] = entryNodePath;
+			}
+			
+
+			var innerGroup = printGroupHm["INNERGROUP"];
+			if ( innerGroup == null )
+			{
+			    innerGroup = [];
+			    printGroupHm["INNERGROUP"] = innerGroup;
+			}
+			
+			calculateMaxCount(specEntryNode,printGroupHm,item);
+			
+			var innerGroup = printGroupHm["INNERGROUP"];
+			
+			var currentHighSize = 0 ; 
+			var oKey = null;
+			var oValue = null;
+			forEachHmElement(innerGroup,oKey,oValue)
+			{
+			    if ( oKey.startsWith (printGroupHm["entryNodePath"]+"$$$$") )
+			    {
+			        var sizeHm = innerGroup[oKey];
+			        var nodePath = sizeHm["NODEPATH"];
+			        var size = sizeHm["SIZE"] ;
+			        
+			        if ( currentHighSize > size )
+			        {
+			        	// do nothing this is the biggest one!
+			        }
+			        else
+			        {
+			        	currentHighSize = size ;
+			        }
+			    }
+			}
+			printGroupHm["INNERGROUP"] = null;
+			printGroupHm["entryNodePath"] = null;
+			rowIndex = rowIndex + currentHighSize ;
+			if ( ( groupOccurrencesSize -1 ) != i )
+			{
+				subPath1 = entryNodePath.parseFixedWidth(0, entryNodePath.lastIndexOf("#")+1);
+				subPath3 = entryNodePath.parseFixedWidth(entryNodePath.lastIndexOf("#")+1,entryNodePath.length());
+				if(subPath3.contains("/"))
+				{
+					subPath2 = entryNodePath.parseFixedWidth(entryNodePath.lastIndexOf("/"),entryNodePath.length());
+					entryNodePath = subPath1 + (i + 1) + subPath2;
+				}
+				else
+				{
+					entryNodePath = subPath1 + (i + 1);
+				}
+				printGroupHm[itemCount+"$"+entryNodePath] = rowIndex;
+			}
+		}
+		else
+		{
+			printGroupHm["index"] = rowIndex;
+		}
+	}
+}
+// ---------------------------------------------------------------------------------------------
+// Name            : parseNode()
+// Description     : For each of the attributes the top most group is passed as the node here
+//					 For each of such passed node all the siblings and entry nodes are computed
+// Input Param					 
+// @item  	   	   : The item
+// @specNode  	   : The node (The top level node)
+// @printGroupHm   : The Hashmap that contains rowIndex and atttribute mappings	
+// @sheet		   : The excel sheet where attributes are to be printed
+// Return Values   : none
+// ---------------------------------------------------------------------------------------------
+function parseNode(item,specNode,printGroupHm,attributeHm,sheet)
+{
+    var nodeChildren = specNode.getNodeChildren();
+    
+    for ( var i = 0 ; i < nodeChildren.size() ; i ++ )
+    {
+        var childNode = nodeChildren[i];
+        
+        // Code changes : Defect 10224 (IBM ID: 75182) : Start
+		//In case of locale this node will have children
+		var localeChildren = childNode.getNodeChildren();
+		
+        //Need to call parseNode recursively if this node is grouping or has children
+		if (childNode.isNodeGrouping() || (localeChildren != null && localeChildren.size() > 0))
+        {
+        	// Code changes : Defect 10224 (IBM ID: 75182) : End
+        	// ------------------------------------------------- 
+        	//	is this group require to be parsed???
+        	//  Check if the group node path is featured in the requested list
+        	//  of attributes
+        	// ------------------------------------------------- 
+        	var isNodePathRequested = isNodePathRequested(childNode.getNodePath(),printGroupHm);
+        	if ( isNodePathRequested )
+        	{
+            	parseNode(item,childNode,printGroupHm,attributeHm,sheet);
+            }
+        }
+        else
+        {
+            var nodePath = childNode.getNodePath();
+            var groupOccurrences = locateGroupOccurrencesForNodePath(nodePath,item);
+            var groupOccurrencesSize = groupOccurrences.size();
+            for ( var j = 0 ; j < groupOccurrencesSize ; j ++ )
+            {
+            	var itemCount = printGroupHm["itemCount"];
+                printGroupHm["CURRENTGROUP"] = groupOccurrences[j];
+                // now print the occurrence of this grouping node
+                if ( printGroupHm [ itemCount + "$" + groupOccurrences[j] ] == null )
+                {
+                	printGroupingNodeOccurrences(groupOccurrences[j],item,printGroupHm,attributeHm,
+                								 groupOccurrencesSize,sheet);
+               		
+                }
+                processAttribute(item,childNode,printGroupHm,attributeHm,sheet);
+            }
+        }
+    }
+}
+// ---------------------------------------------------------------------------------------------
+// Name            : printExcelColumnName()
+// Description     : Print the excel column names ( attributes name)
+
+// Input Param
+// @row  	   	   : The row where the attribute names are to be printed
+// @cellIndex  	   : The cellIndex in this @row
+// @cellValue      : The value to be printed in the cell
+// @isGrouping     : True indicates the the cellValue is type Grouping
+// @printGroupHm   : The Hashmap that contains rowIndex and atttribute mappings
+// Return Values   : none
+// ---------------------------------------------------------------------------------------------
+function printExcelColumnName(row,cellIndex,cellValue, isGrouping, printGroupHm)
+{
+	var cell = row.createExcelCell(cellIndex);
+	if(true == isGrouping)
+	{
+		var book = printGroupHm["EXCELBOOK"];
+		var cellStyle = book.createExcelCellStyle();
+		cellStyle.setFillPattern("FINE_DOTS");
+        cellStyle.setFillBackgroundColor("GREY_25_PERCENT");
+		cell.setExcelStyle(cellStyle);
+	}
+	cell.setCellType("STRING");
+	cell.setStringCellValue(cellValue);
+}
+
+// ---------------------------------------------------------------------------------------------
+// Name            : createExcelColumnName()
+// Description     : Creates column headers in a excel row using the attribute name.
+//					 For e.g for a attribute like 
+//					 TestSpec/grp1/grp1-grp1-1/grp1-grp1-1-attr1 , where
+//					 grp1-grp1-1-attr1 - is the attribute and grp1 and grp1-grp1-1 are grouping nodes
+//					 The output in the excel sheet will be
+//					 TestSpec/grp1 		 						- cell 1
+//					 TestSpec/grp1/grp1-grp1-1 					- cell 2
+//					 TestSpec/grp1/grp1-grp1-1/grp1-grp1-1-attr1- cell 3 	
+// Input Param					 
+// @attribute  	   : The attribute to printed as excel cell headers
+// @row  	  	   : The row where the headers are to be printed in the excel sheet.
+// @printGroupHm   : The Hashmap that contains rowIndex and atttribute mappings	
+// @isLocalized    : Flag which is true if the node is localized
+//					 This prevents from creating alocalized node as a grouping node
+// Return Values   : none
+// ---------------------------------------------------------------------------------------------
+function createExcelColumnName(attribute,row,printGroupHm,attributeHm,isLocalized)
+{
+    // check if the attribute is grouping or leaf
+    var cell = null;
+    var cellIndex = null;
+    cellIndex = printGroupHm["cellIndex"] ; 
+    var origAttribute = printGroupHm["orig_attribute"];
+    var indexOfGroup = attribute.indexOf("/");
+
+    if ( indexOfGroup != -1)
+    {
+        var groupName = attribute.parseFixedWidth(0,indexOfGroup);
+        if ( printGroupHm[groupName] == null)
+        {
+            // keep list of groups processed so can be reset when new sheet required
+            if ( attribute.indexOf("/") != -1)
+            {
+                // check if in the origAttribute begins with the group name
+                if ( origAttribute.startsWith(groupName))
+                {
+                    printExcelColumnName(row,cellIndex,groupName, true, printGroupHm);
+                    printGroupHm[cellIndex] = groupName+"CELLINDEX";
+					attributeHm[cellIndex] = groupName+"CELLINDEX";
+                    cellIndex = cellIndex + 1;
+                }
+                else
+                {
+                    var prefix = origAttribute.parseFixedWidth(0,origAttribute.indexOf(groupName));
+                    printExcelColumnName(row,cellIndex,prefix + groupName, true, printGroupHm);
+                    printGroupHm[cellIndex] = prefix + groupName+"CELLINDEX";
+					attributeHm[cellIndex] = prefix + groupName+"CELLINDEX";
+                    cellIndex = cellIndex + 1;
+                }
+            }
+            else
+            {
+                printGroupHm[cellIndex] = groupName+"CELLINDEX";
+				attributeHm[cellIndex] = groupName+"CELLINDEX";
+                }
+            printGroupHm["cellIndex"] = cellIndex;
+            attributeHm["cellIndex"] = cellIndex;
+            printGroupHm[groupName] = true;
+            attributeHm[groupName] = true;
+        }
+        // now there could be either sub groups or leaf node here
+        var strippedAttribute = attribute.parseFixedWidth(indexOfGroup+1,
+                                                          attribute.length());
+        createExcelColumnName(strippedAttribute,row,printGroupHm,attributeHm,isLocalized);
+    }	
+    else
+    {
+        //a leaf node
+        //CR 38987
+        //if ( printGroupHm[attribute] == null)  
+        //{
+            var locale = null;
+            if ( isLocalized )
+            {
+
+                var lastIndex = origAttribute.lastIndexOf("/");
+                locale = origAttribute.parseFixedWidth(lastIndex,origAttribute.length());
+                attribute = attribute + locale;
+            }
+            if ( origAttribute.endsWith(attribute) )
+            {
+                var prefix = origAttribute.parseFixedWidth(0,origAttribute.indexOf(attribute));
+                // DS this sometimes gets the prefix wrong if attribute name part group name
+                printExcelColumnName(row,cellIndex,prefix + attribute, false, printGroupHm);
+                printGroupHm[cellIndex] = origAttribute+"CELLINDEX";
+                attributeHm[cellIndex] = origAttribute+"CELLINDEX";
+            }
+            //printGroupHm[attribute] = true;
+            printGroupHm["cellIndex"] = cellIndex + 1;
+            attributeHm["cellIndex"] = cellIndex + 1;
+        //}
+    }
+}
+
+// ---------------------------------------------------------------------------------------------
+// Name            : fetchAttributesFromView()
+// Description     : Fetches the attribute list for a specific catalog view
+// Input Param					 
+// @catalogName    : The container name
+// @ctgViewName    : The view from where the attributes have to be fetched.
+// @ctgViewType    : The view type could be BULK_EDIT or ITEM_EDIT
+// Return Values   : none
+// ---------------------------------------------------------------------------------------------
+function fetchAttributesFromView(catalogName,ctgViewName,ctgViewType)
+{
+    var ctgView = getCtgByName(catalogName).getCtgViewByName(ctgViewName,ctgViewType);
+    var ctgViewAttrColNames = ctgView.getCtgViewAttrGroupsList();
+    var attribsList= ctgView.getCtgViewAttribsList();
+    return attribsList;
+}
+
+// ---------------------------------------------------------------------------------------------
+// Name            : printExcelColumnNames()
+// Description     : Utility function to take an array of attributes and print excel header
+// Input Param					 
+// @printGroupHm   : The Hashmap that contains rowIndex and atttribute mappings	
+// @attributes     : An array of attributes
+// @row			   : The row where the columns have to be printed
+// Return Values   : none
+// ---------------------------------------------------------------------------------------------
+function printExcelColumnNames(printGroupHm,attributeHm,attributes,row)
+{
+    for (var j=0;j<attributes.size();j++)
+    {
+        var indexOfSpec = attributes[j].indexOf("/");
+        var actualAttribute =attributes[j];
+        var modifiedAttribute  =  null;
+        var isLocalized = false;
+        if ( indexOfSpec != -1)
+        {
+            // now the attribute could be a localized node
+            var specNode = getSpecNodeByPath(actualAttribute);
+            var localizedNode = specNode.getNodeLocale();
+            if ( localizedNode != null && checkString(localizedNode,"") != "" )
+            {
+                modifiedAttribute = actualAttribute.parseFixedWidth(0,actualAttribute.lastIndexOf("/"));
+                isLocalized = true;
+            }
+            else
+            {
+                modifiedAttribute = actualAttribute;
+            }
+            modifiedAttribute = modifiedAttribute.parseFixedWidth(indexOfSpec+1, modifiedAttribute.length());
+        }
+        printGroupHm["orig_attribute"] = actualAttribute;
+        createExcelColumnName(modifiedAttribute,row,printGroupHm,attributeHm,isLocalized);
+    }
+}
+	
+// ---------------------------------------------------------------------------------------------
+// Name            : processNodePath()
+// Description     : A function that parses a given node.
+//                   For a given node path like TestSpec/grp1/grp2/attr1
+//                   parse each occurrence of / and finally just pass on the TestSpec/grp1 to the 
+//                   parseNode function
+// Input Param					 
+// @printGroupHm   : The Hashmap that contains rowIndex and atttribute mappings	
+// @nodePath       : An array of attributes
+// @item		   : The row where the columns have to be printed
+// @sheet          : The excel sheet in which the view will be printed
+// Return Values   : none
+// ---------------------------------------------------------------------------------------------
+function processNodePath(nodePath,item,printGroupHm,attributeHm,sheet)
+{
+    var parsedNodePath = nodePath.parseFixedWidth(0,nodePath.lastIndexOf("/"));
+    var isSpecName = isNodePathSpecName(item,parsedNodePath);
+    if ( !isSpecName )
+    {
+        if( parsedNodePath != "" )
+        {
+            processNodePath(parsedNodePath,item,printGroupHm,attributeHm,sheet);
+        }
+    }
+    else
+    {
+        var rootEntryNode = item.getRootEntryNode();
+        var specNode = getSpecNodeByPath(nodePath);
+        parseNode(item,specNode,printGroupHm,attributeHm,sheet);
+    }
+
+}
+// ---------------------------------------------------------------------------------------------
+// Name            		: exportSearchResults()
+// Description     		: The originating point for this entire implementation.
+// Input Param					 
+// @catalogName      	: The catalog being considered
+// @ctgViewName      	: The view thats applicable to this report
+// @ctgViewType      	: The view type ( e.g BULK_EDIT)
+// @excelFileName      	: The name of the output excel file
+// @maxItems      		: The max no of items that have to exported to the excel sheet
+// @noOfItemsToFollow   : How many more items are there????????
+// @itemIds      		: An array of item primary keys
+// Return Values   		: none
+// ---------------------------------------------------------------------------------------------
+function exportSearchResults(ctg,ctgViewName,ctgViewType,excelFileName,entrySet)
+{
+    // debugging code that can be re-enabled to use in diagnosis
+    var catalogName = ctg.getCtgName();
+    var attributes = fetchAttributesFromView(catalogName,ctgViewName,ctgViewType);
+	// DS-change separate hm so looking for attribute is done in non-data hm
+    var attributeHm = [];
+	var printGroupHm = [];
+    printGroupHm["ATTRIBUTESVIEW"] = attributes;
+    
+    printGroupHm["cellIndex"] = 0;
+    
+    var book = new ExcelBook(null,"XLSX"); 
+    var sheet = book.createExcelSheet("Rich Search Export Results"); 
+    // store the excelBook in to the hashmap
+    printGroupHm["EXCELBOOK"] = book;
+    var cellStyle = book.createExcelCellStyle();
+    cellStyle.setWrapText(true);
+    
+    var rowIndex = 0;
+    var row = sheet.createRow(rowIndex); 
+    printGroupHm["rowIndex"]=rowIndex;
+    printExcelColumnNames(printGroupHm,attributeHm,attributes,row);	
+	// now iterate through the entrySet
+	var i = 0;
+	var item = null;
+    var cnt = 0;
+    forEachEntrySetElement(entrySet,item)
+    {
+        // debugging code
+        // cnt = cnt + 1;
+        var rootEntryNode = item.getRootEntryNode();
+        printGroupHm["itemCount"] = i;	
+        // Iterate through the attribute list for every item
+        for (var j=0;j<attributes.size();j++)
+        {
+            var nodePath = attributes[j];
+            // is the node being parsed a localized node??
+            var specNode = getSpecNodeByPath(attributes[j]);         
+            var localizedNode = specNode.getNodeLocale();
+            if ( localizedNode != null && checkString(localizedNode,"") != "" )
+            {
+                // Trim the attribute path up to the attr level, removing the locale						    	
+                nodePath = nodePath.parseFixedWidth(0,nodePath.lastIndexOf("/"));
+            }
+            nodePath = nodePath.parseFixedWidth(0,nodePath.lastIndexOf("/"));
+            var isSpecName = isNodePathSpecName(item,nodePath);
+            if ( !isSpecName )
+            {
+                processNodePath(nodePath,item,printGroupHm,attributeHm,sheet);
+            }
+            else
+            {
+                // the node may not be grouping but could still be multi occurring....
+                processAttribute(item,specNode,printGroupHm,attributeHm,sheet);
+            }
+        }
+        // now set the current high_row_index to this item's max row
+        // the only way high_rowIndex can be null is when there are no attributes in the collection
+        if ( printGroupHm["high_rowIndex"] == null )
+        {
+            printGroupHm["high_rowIndex"] = 0 ; 
+        }
+        printGroupHm["high_rowIndex"] = toInteger(printGroupHm["high_rowIndex"]) + 1 ;		 
+        printGroupHm["ITEM"+i+"MAXROWINDEX"] = printGroupHm["high_rowIndex"] ;
+		++ i ;
+        //break;
+    }
+    // debugging code
+    printGroupHm = null;
+    
+    book.saveToDocStore(excelFileName,true); 	
+}
+// ------------------------------------------------------------------------------------------
+//	Main Function : Script Harness to test the export rich search results functionality
+// ------------------------------------------------------------------------------------------
+var catalog 		    = container;
+var ctgViewName 		= getScriptContextValue("$ctg_view_name"); //"$ctg_view_name";
+var ctgViewType 		= "BULK_EDIT";
+var entrySet			= entrySet;
+var docName 			= "/temp_reports/"+getCurrentUserName()+"/Search Result Report - "+getDateTimeInUserTimeZone()+".xlsx";
+var docfileout  		= createOtherOut(docName);
+docfileout.save(docName);
+var excelFileName 		= docName;
+
+
+exportSearchResults(catalog,ctgViewName,ctgViewType,excelFileName,entrySet);
