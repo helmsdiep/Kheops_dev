@@ -1,6 +1,6 @@
 //
 // InfoSphere MDM Collaboration Server Script
-// bemadvl
+// 
 
 function getEn(hmGlobals, item, sNodeName) {
     return getScriptByPath("/scripts/triggers/LG.Library.LGUtils").getFunctionByName("getEntryNodesFromAttrPath").invoke(item, sNodeName);
