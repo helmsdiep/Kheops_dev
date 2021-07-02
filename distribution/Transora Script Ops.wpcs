@@ -1,0 +1,66 @@
+//************************************************ {COPYRIGHT-TOP} ***
+// IBM Confidential
+// OCO Source Materials
+// 5725-E59
+//
+// (c) Copyright IBM Corp. 2000, 2015 All Rights Reserved
+//
+// The source code for this program is not published or otherwise
+// divested of its trade secrets, irrespective of what has been
+// deposited with the U.S. Copyright Office.
+//************************************************ {COPYRIGHT-END} **/
+
+// to get the Transora Message Format when date is in EEE MMM dd HH:mm:ss z yyyy format
+function convertToTransoraDateFormat(dateValue)
+{
+        
+	var dateStr = dateValue+"";
+	//out.writeln("DateStr is " + dateStr);
+	
+	var format = "EEE MMM dd HH:mm:ss z yyyy";
+	if(dateStr != "")
+	{
+		date = new Date(format,dateStr);
+		return date.formatDate("yyyy-MM-dd'T'HH:mm:ss.SSS");
+	}
+	return dateStr;
+}
+
+
+// to get the Transora Message Format when date is in dd-MM-yyyy HH:mm format
+function convertUIToTransoraDateFormat(dateValue)
+{
+        
+	var dateStr = dateValue;
+	//out.writeln("DateStr is " + dateStr);
+	
+	var format = "dd-MM-yyyy HH:mm";
+	if(dateStr != "")
+	{
+		date = new Date(format,dateStr);
+		return date.formatDate("yyyy-MM-dd'T'HH:mm:ss.SSS");
+	}
+	return dateStr;
+}
+
+// to get transora timestamp - changed the date format to add 3 S for milliseconds to display the 
+// milliseconds in 3 digits always
+function getTimeStamp()
+{
+	var date = today().formatDate("yyyy-MM-dd'T'HH:mm:ss.SSS");
+	return date;
+}
+
+//code to get Principal header from lookUp
+function getPrincipalHeader(strVar)
+{
+	out.writeln("executing the getPrincipal Header method for IP ::: "+strVar);
+	var IP = strVar;
+
+	var lookupTable = getLkpByName("Principal_Header_LookUp");
+	var principal_Header = lookupValues(lookupTable,IP);
+	out.writeln("principal_Header from new script:" + principal_Header[0]);
+	return principal_Header[0];
+
+	//return gdsMsg["FromID"]+"@xml";
+}

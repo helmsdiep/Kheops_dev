@@ -1,0 +1,36 @@
+var book = new ExcelBook(null,"XLSX");
+var sheet = book.getExcelSheet(0);
+var parser = new ExcelParser(sheet);
+
+parser.splitLine();
+
+var bDone = false;
+while(!bDone)
+{
+    var attrs = parser.splitLine();
+    bDone = (null == attrs);
+    if (!bDone)
+    {
+        var itemAttrs = [];
+        itemAttrs["IS-L254/C00-DisplayName"] = attrs[0];
+        itemAttrs["IS-L254/C01-Code"] = attrs[1];
+        itemAttrs["IS-L254/C02-Label.fr_FR"] = attrs[2];
+        itemAttrs["IS-L254/C02-Label.en_US"] = attrs[3];
+        itemAttrs["IS-L254/C03-Category"] = attrs[4];
+        itemAttrs["IS-L254/C04-SubCategory"] = attrs[5];
+        itemAttrs["IS-L254/C05-Status"] = attrs[6];
+        var itemValidatedAttrs = validateMappedAttribs(itemAttrs);
+        if (null != itemValidatedAttrs)
+        {
+            var item = buildCtgItem();
+            var catalog = item.getCatalog();
+            var item2 = catalog.getCtgItemByPrimaryKey(attrs[0]);
+            if( item2 != null )
+            {
+                item = item2;
+            }
+            item.setCtgItemMappedAttribs(itemValidatedAttrs);
+            item.saveCtgItem();
+        }
+    }
+}

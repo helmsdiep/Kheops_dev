@@ -1,0 +1,159 @@
+//************************************************ {COPYRIGHT-TOP} ***
+// IBM Confidential
+// OCO Source Materials
+// 5725-E59
+//
+// (c) Copyright IBM Corp. 2000, 2015 All Rights Reserved
+//
+// The source code for this program is not published or otherwise
+// divested of its trade secrets, irrespective of what has been
+// deposited with the U.S. Copyright Office.
+//************************************************ {COPYRIGHT-END} **/
+
+function validate(parent, child){
+	var x = parent + "-" + child;
+	//CASE - The standard shipping unit level.
+	//May be contained in one or more Parent (PL, DS, MX). 
+	//May contain children in a single instance (EA or PK).
+	var validRelations_CA = "PL-CA,CA-DS,DS-CA,MX-CA,CA-EA,CA-PK";
+	if(validRelations_CA.contains(x))
+	{
+		out.writeln("----->VALID");
+		return true;
+	}
+	//----------------------------------------------------------------------------
+	//EACH - The lowest level of the item hierarchy intented or labeled for individual retail sail. 
+	//May not have any children. 
+	//May have multiple instances of parents (PK, CA, DS, PL or MX).
+	var validRelations_EA = "PK-EA,CA-EA,DS-EA,PL-EA,MX-EA";
+	if(validRelations_EA.contains(x))
+	{
+		out.writeln("----->VALID");
+		return true;
+	}
+	//----------------------------------------------------------------------------
+	//DISPLAY/SHIPPER - A pre-assembled display, shipper or mixed case. 
+	//May have a Parent (PL or MX).
+	//May have children (EA, CA or another DS) in multiple instances. Not a full pallet.
+	var validRelations_DS = "PL-DS,MX-DS,DS-EA,DS-CA,DS-DS";
+	if(validRelations_DS.contains(x))
+	{
+		out.writeln("----->VALID");
+		return true;
+	}
+	//----------------------------------------------------------------------------
+	//MOD PALLET (MIXED) - A "mixed mod" or "display ready pallet" specially prebuilt.
+	//May not have any parent. 
+	//May have children (PK, DS, CA and EA) in multiple instances.
+	var validRelations_MX = "MX-PK,MX-DS,MX-CA,MX-EA";
+	if(validRelations_MX.contains(x))
+	{
+		out.writeln("----->VALID");
+		return true;
+	}
+	//----------------------------------------------------------------------------
+	//PACKAGE - A logistical unit between case and each. 
+	//This may be a consumable Inner Pack (I.e Carton of Cigarettes) or it may be simply 
+	//a logistical pack (I.e Dozens of Toothbrushes). 
+	//Multiple instances of a child (EA) are allowed in the TDC.
+	//IMPORTANT: UCCnet allows only a single instance of a child (EA). 
+	//Multiple instances of a parent (CA and DS) are allowed.
+	var validRelations_PK = "PK-EA,CA-PK,DS-PK";
+	if(validRelations_PK.contains(x))
+	{
+		out.writeln("----->VALID");
+		return true;
+	}
+	//----------------------------------------------------------------------------
+	//PALLET - A regular shipping unit that is constructed to TI/HI specifications.
+	//May not have parents. 
+	//May have children (EA, PK, CA and DS) in a single instance.
+	var validRelations_PL = "PL-EA,PL-PK,PL-CA,PL-DS";
+	if(validRelations_PL.contains(x))
+	{
+		out.writeln("----->VALID");
+		return true;
+	}
+	
+	out.writeln("----->INVALID");
+	return false;
+}
+
+function isValidRelationShip(parentGTIN, childGTIN){
+	parentGTINCat = getGTINCategory(parentGTIN);
+	parentGTIN_DescType = parentGTINCat.getCategoryAttrib("GTIN_Spec/Descriptor Type"); 
+	out.writeln("----->"+parentGTIN_DescType);
+
+	childGTINCat = getGTINCategory(childGTIN);
+	childGTIN_DescType = childGTINCat.getCategoryAttrib("GTIN_Spec/Descriptor Type"); 
+	out.writeln("----->"+childGTIN_DescType);
+
+	resultVal = validate(parentGTIN_DescType, childGTIN_DescType);
+	return resultVal;
+}
+
+function isValidLink(parentGTINCat, childGTINCat){
+	parentGTIN_DescType = parentGTINCat.getCategoryAttrib("GTIN_Spec/Descriptor Type"); 
+	out.writeln("----->"+parentGTIN_DescType);
+
+	childGTIN_DescType = childGTINCat.getCategoryAttrib("GTIN_Spec/Descriptor Type"); 
+	out.writeln("----->"+childGTIN_DescType);
+
+	resultVal = validate(parentGTIN_DescType, childGTIN_DescType);
+	return resultVal;
+}
+
+function getValidChildProductType(sProductType){
+	var validChildPT = "";
+	if(sProductType == "CA"){
+		//var validRelations_CA = "PL-CA,DS-CA,MX-CA,CA-EA,CA-PK";
+		validChildPT = "DS,EA,PK";
+	}else if (sProductType == "EA"){
+		//var validRelations_EA = "PK-EA,CA-EA,DS-EA,PL-EA,MX-EA";
+		//XX is for unknown/no values
+		validChildPT = "XX";
+	}else if (sProductType == "DS"){
+		//var validRelations_DS = "PL-DS,MX-DS,CA-DS,DS-EA,DS-CA,DS-DS";
+		validChildPT = "EA,CA,DS";
+	}else if (sProductType == "MX"){
+		//var validRelations_MX = "MX-PK,MX-DS,MX-CA,MX-EA";
+		validChildPT = "PK,DS,CA,EA";
+	}else if (sProductType == "PK"){
+		//var validRelations_PK = "PK-EA,CA-PK,DS-PK";
+		validChildPT = "EA";
+	}else if (sProductType == "PL"){
+		//var validRelations_PL = "PL-EA,PL-PK,PL-CA,PL-DS";
+		validChildPT = "EA,PK,CA,DS";
+	}
+	return validChildPT;
+}
+
+function getValidParentProductType(sProductType){
+	var validParentPT = "";
+	if(sProductType == "CA"){
+		//var validRelations_CA = "PL-CA,DS-CA,MX-CA,CA-EA,CA-PK";
+		validParentPT = "PL,DS,MX";
+	}else if (sProductType == "EA"){
+		//var validRelations_EA = "PK-EA,CA-EA,DS-EA,PL-EA,MX-EA";
+		validParentPT = "PK,CA,DS,PL,MX";
+	}else if (sProductType == "DS"){
+		//var validRelations_DS = "PL-DS,MX-DS,CA-DS,DS-EA,DS-CA,DS-DS";
+		validParentPT = "PL,MX,CA";
+	}else if (sProductType == "MX"){
+		//var validRelations_MX = "MX-PK,MX-DS,MX-CA,MX-EA";
+		//XX is for unknown/no values
+		validParentPT = "XX";
+	}else if (sProductType == "PK"){
+		//var validRelations_PK = "PK-EA,CA-PK,DS-PK";
+		validParentPT = "CA,DS";
+	}else if (sProductType == "PL"){
+		//var validRelations_PL = "PL-EA,PL-PK,PL-CA,PL-DS";
+		//XX is for unknown/No values
+		validParentPT = "XX";
+	}
+	return validParentPT;
+}
+
+//var a = "07896634112362";
+//var b = "43843081675478";
+//out.writeln("----->" + isValidRelationShip(a, b));

@@ -1,0 +1,13 @@
+var item;
+forEachCtgItem(item)
+{
+    var itemAttrs = item.getCtgItemMappedAttribs();
+    var itemValidatedAttrs = validateMappedAttribs(itemAttrs);
+    if (null != itemValidatedAttrs)
+    {
+        out.writeln(buildCSV(
+        checkString(itemValidatedAttrs["SC003-IMSExport/systemId"], ""),
+        checkString(itemValidatedAttrs["SC003-IMSExport/name"], ""),
+        checkString(itemValidatedAttrs["SC003-IMSExport/length"], "")));
+    }
+}

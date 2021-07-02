@@ -1,0 +1,77 @@
+//
+// InfoSphere MDM Collaboration Server Script
+//
+var hmGlobals = getScriptByPath("/scripts/triggers/LG.Library.Const").getFunctionByName("getConst").invoke();
+hmGlobals["FN_GET_ENTRY_NODES_FROM_ATTR_PATH"] = getScriptByPath("/scripts/triggers/LG.Library.LGUtils").getFunctionByName("getEntryNodesFromAttrPath");
+hmGlobals["LOGGER"]=getLogger("Manasco.PostSave");
+var log = hmGlobals["LOGGER"];
+var errorMessage = "";
+var e;
+
+log.loggerDebug("### BEGIN LG.Catalog.PostSave for entry " + item.getCtgItemPrimaryKey());
+
+log.loggerDebug("Start Postsave");
+//creating constants and functions
+log.loggerDebug("UDL logging...");
+var sLogName = "ManascoItemLog";
+var ctgUDL= item.getCatalog().getCtgName();//TODO hier een catalognaam invullen. Kan dus via een getCtgName()
+
+var sSaveStatus = checkString(item.getEntrySaveResult(),"");	
+log.loggerDebug("sSaveStatus... : " + sSaveStatus);
+var sUserName = checkString(getCurrentUserName(),"");
+var myUDL = ctgUDL.getUserDefinedLog(sLogName);
+if (null == myUDL) {
+		log.loggerDebug("There is no UDL defined... : ");
+	    myUDL = ctgUDL.newUserDefinedLog(sLogName, sLogName, true);
+	    myUDL.saveUserDefinedLog();
+	    myUDL = ctgUDL.getUserDefinedLog(sLogName);
+	}
+
+	var errorMsg = null;
+	catchError(errorMsg) {
+		
+		var paths = null;
+		var itmChangedData = item.getEntryChangedDataSinceLastSave();
+		if (itmChangedData != null) {
+		   	paths = itmChangedData.getModifiedAttributePathsNewEntry();
+
+			//Checking for added attributes
+			var pathsAdded = itmChangedData.getAddedAttributePathsNewEntry();
+			if (pathsAdded != null) {
+			    for (var i = 0; i < pathsAdded.size(); i++) {	
+			        if (pathsAdded[i] != null && !pathsAdded[i].contains("Validatie")) {  
+			        	//UDL      
+			            log.loggerDebug(pathsAdded[i]);
+			            paths.add(pathsAdded[i]);
+			        }
+			    }
+		    }
+		    
+		    //Checking for deleted attributes
+			var pathsDeleted = itmChangedData.getDeletedAttributePathsOldEntry();
+			if (pathsDeleted != null) {
+			    for (var i = 0; i < pathsDeleted.size(); i++) {	
+			        if (pathsDeleted[i] != null && !pathsDeleted[i].contains("Validatie")) {  
+			        	//UDL      
+			            log.loggerDebug(pathsDeleted[i]);
+			            paths.add("nodeisdeletedfromitem" + pathsDeleted[i]);
+			        }
+			    }
+		    }
+		}
+		
+		if (paths != null) {
+			for (var i = 0; i < paths.size(); i++) {	
+		        if (paths[i] != null) {  
+		        	//UDL      
+		            var strValue = checkString(item.getEntryAttrib(paths[i]),"");
+		            myUDL.userDefinedLogAddEntry(item, sUserName + ": " + paths[i] + " changed to : " + strValue);
+		            log.loggerDebug(paths[i]);
+		        }
+		    } 		
+	}	    
+}
+if(errorMsg != null){
+		log.loggerDebug(errorMsg);
+}
+

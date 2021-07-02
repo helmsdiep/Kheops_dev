@@ -1,0 +1,40 @@
+var book = new ExcelBook(null, "XLSX");
+var sheet = book.getExcelSheet(0);
+var parser = new ExcelParser(sheet);
+var bDone = false;
+var ctgTree = getCategoryTreeByName("H010-FieldMapIMS");
+
+while (!bDone) {
+    var attrs = parser.splitLine();
+    bDone = (null == attrs);
+    if (!bDone) {
+        var itemAttrs = [];
+        itemAttrs["IMS_AttribsMapImportSpec/f1"] = attrs[1];
+        itemAttrs["IMS_AttribsMapImportSpec/f2"] = attrs[2];
+        itemAttrs["IMS_AttribsMapImportSpec/f3"] = attrs[3];
+        itemAttrs["IMS_AttribsMapImportSpec/f4"] = attrs[4];
+        itemAttrs["IMS_AttribsMapImportSpec/f5"] = attrs[5];
+        itemAttrs["IMS_AttribsMapImportSpec/f6"] = attrs[6];
+        itemAttrs["IMS_AttribsMapImportSpec/f7"] = attrs[7];
+        itemAttrs["IMS_AttribsMapImportSpec/f8"] = attrs[8];
+        itemAttrs["IMS_AttribsMapImportSpec/f9"] = attrs[9];
+        itemAttrs["IMS_AttribsMapImportSpec/f10"] = attrs[10];
+
+        logWarning(itemAttrs["IMS_AttribsMapImportSpec/f10"], itemAttrs["IMS_AttribsMapImportSpec/f9"]);
+        var itemValidatedAttrs = validateMappedAttribs(itemAttrs);
+        if (null != itemValidatedAttrs) {
+            var item = buildCtgItem();
+
+            var category = ctgTree.getCategoryByPath(attrs[0], ":");
+            if (category != null) {
+                item.mapCtgItemToCategory(category);
+            }
+            item.setCtgItemMappedAttribs(itemValidatedAttrs);
+
+            item.saveCtgItem();
+        }
+    }
+}
+
+
+

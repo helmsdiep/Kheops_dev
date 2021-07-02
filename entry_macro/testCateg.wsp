@@ -1,0 +1,2 @@
+out.writeln(category.getFullPaths()[0]);
+

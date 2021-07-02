@@ -1,0 +1,13 @@
+var item;
+forEachCtgItem(item)
+{
+    var itemAttrs = item.getCtgItemMappedAttribs();
+    var itemValidatedAttrs = validateMappedAttribs(itemAttrs);
+    if (null != itemValidatedAttrs)
+    {
+        out.writeln(buildFixedWidth(
+        checkString(itemValidatedAttrs["SC003-IMSExport/systemId"], ""), 3000,
+        checkString(itemValidatedAttrs["SC003-IMSExport/name"], ""), 3000,
+        checkString(itemValidatedAttrs["SC003-IMSExport/length"], ""), 3000));
+    }
+}

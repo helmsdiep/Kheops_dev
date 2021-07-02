@@ -1,0 +1,49 @@
+var item;
+// For Excel create a book and sheet to export to.
+var book = new ExcelBook();
+var sheet = book.createExcelSheet();
+var row;
+var rowIndex=0;
+var style;
+forEachCtgItem(item)
+{
+    var itemAttrs = item.getCtgItemMappedAttribs();
+    var itemValidatedAttrs = validateMappedAttribs(itemAttrs);
+    if (null != itemValidatedAttrs)
+    {
+        var cell;
+        var cellIndex=0;
+        var attrDate;
+        var attrString;
+        var attrNum;
+        // create an excel row for this item.
+        row = sheet.createRow(rowIndex);
+        rowIndex++;
+        // then populate the cells with the attributes.
+        cell = row.createExcelCell(cellIndex);
+        attrString = checkString(itemValidatedAttrs["SC003-IMSExport/systemId"], "");
+        if (null != attrString) {
+          cell.setCellType("STRING");
+          cell.setStringCellValue(attrString);
+        }
+        cellIndex++; 
+
+        cell = row.createExcelCell(cellIndex);
+        attrString = checkString(itemValidatedAttrs["SC003-IMSExport/name"], "");
+        if (null != attrString) {
+          cell.setCellType("STRING");
+          cell.setStringCellValue(attrString);
+        }
+        cellIndex++; 
+
+        cell = row.createExcelCell(cellIndex);
+        attrString = checkString(itemValidatedAttrs["SC003-IMSExport/length"], "");
+        if (null != attrString) {
+          cell.setCellType("STRING");
+          cell.setStringCellValue(attrString);
+        }
+        cellIndex++; 
+    }
+}
+// Save to the docstore
+book.saveToDocStore();

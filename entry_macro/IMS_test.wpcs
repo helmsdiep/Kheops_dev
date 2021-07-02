@@ -1,0 +1,3 @@
+var a=1;
+var b=0;
+out.writeln(a/b);

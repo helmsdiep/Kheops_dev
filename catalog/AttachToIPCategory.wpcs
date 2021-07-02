@@ -1,0 +1,23 @@
+//************************************************ {COPYRIGHT-TOP} ***
+// IBM Confidential
+// OCO Source Materials
+// 5725-E59
+//
+// (c) Copyright IBM Corp. 2000, 2015 All Rights Reserved
+//
+// The source code for this program is not published or otherwise
+// divested of its trade secrets, irrespective of what has been
+// deposited with the U.S. Copyright Office.
+//************************************************ {COPYRIGHT-END} **/
+
+var err_GlobalLocalCatalog;
+catchError(err_GlobalLocalCatalog) {
+    var sLocalSpec = "Global_Local_Attributes_Spec";
+    var sIPGLN = checkString(item.getEntryAttrib(sLocalSpec + "/InformationProvider"), "");
+    var catTreeIP = getCategoryTreeByName("IP_Hierarchy");
+    var catIP = catTreeIP.getEntryByPrimaryKey(sIPGLN);
+    item.mapCtgItemToCategory(catIP);
+}
+if (err_GlobalLocalCatalog != null) {
+    out.writeln("ERROR: " + err_GlobalLocalCatalog);
+}

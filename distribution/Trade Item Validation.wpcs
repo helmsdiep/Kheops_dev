@@ -1,0 +1,2524 @@
+//************************************************ {COPYRIGHT-TOP} ***
+// IBM Confidential
+// OCO Source Materials
+// 5725-E59
+//
+// (c) Copyright IBM Corp. 2000, 2015 All Rights Reserved
+//
+// The source code for this program is not published or otherwise
+// divested of its trade secrets, irrespective of what has been
+// deposited with the U.S. Copyright Office.
+//************************************************ {COPYRIGHT-END} **/
+
+//*********************Common Functions****************************************
+function init(tradeItem)
+{
+	//out.writeln("Initializing Script variables");
+	setScriptContextValue("UDEX", null);
+	setScriptContextValue("SINFOS", null);
+	setScriptContextValue("Regulatory Compliance", null);
+	setScriptContextValue("Office Supplies", null);
+	setScriptContextValue("Netherlands", null);
+	setScriptContextValue("Lowes", null);
+	setScriptContextValue("Hardlines", null);
+	setScriptContextValue("Agentrics", null);
+	setScriptContextValue("Electronic Gaming", null);
+	setScriptContextValue("Movie Publication", null);
+	setScriptContextValue("Music Recording", null);
+	setScriptContextValue("Miscellaneous", null);
+	setScriptContextValue("Target Market Extension", null);
+	setScriptContextValue("Animal Feeding", null);
+	setScriptContextValue("Trade Item Licensing", null);
+	setScriptContextValue("TM Additional Attribute", null);
+	//out.writeln("From Script after init");
+
+}
+
+
+
+function isEmpty(sAttribute) {
+	if (sAttribute != null && sAttribute != "") {
+		return false;
+	} else {
+		return true;
+	}
+}
+
+function getLangSpecificAttributeValue(tradeItem, sAttrPath) {
+ //out.writeln ("getLangSpecificAttributeValue" );
+  if (isLangSpecificAttr (sAttrPath)) {
+    var itemMap = getGDSLanguages();
+    var max = itemMap.size();
+
+    //out.writeln ("No of languages : " + max);
+    var i = 0;
+    var langAttrPath = "";
+    var hashIndex = sAttrPath.indexOf("#");
+
+    if (hashIndex != -1) {
+       langAttrPath = substring(sAttrPath, 0, hashIndex );
+    } else {
+       var textIndex = sAttrPath.indexOf("/text");
+       langAttrPath = substring(sAttrPath, 0, textIndex);
+    }
+
+    //out.writeln ("Language AttrPath : " + langAttrPath );
+
+    if (!isEmpty(langAttrPath)) {
+
+      for (i=0; i<max; i++) {
+         var hashAttrPath = langAttrPath + "#" + i + "/text";
+         //out.writeln("Language Attr Path with hash : " + hashAttrPath );
+
+         var attrValue = getTradeItemAttributeValueSS(tradeItem, hashAttrPath);
+         if (!isEmpty(attrValue)) {
+           //out.writeln("Language Attr Path value with hash : " + attrValue );
+           return getTradeItemAttributeValueSS(tradeItem, hashAttrPath);
+          }
+      }
+   }
+
+  }
+
+  return getTradeItemAttributeValueSS(tradeItem, sAttrPath);
+
+ }
+
+function isCharacterLengthValid(characterValue, validCharacterLength) {
+	if (!isEmpty(characterValue)) {
+		var characterLength = characterValue.length();
+		if (characterLength <= validCharacterLength) {
+			return true;
+		}
+	}
+	return false;
+}
+
+
+function isInteroperable(tradeItem,categoryName) {
+	 //out.writeln ("isInteroperable" );
+	var isInteroperable = getScriptContextValue(categoryName);
+	if (isEmpty(isInteroperable)) {
+
+		isInteroperable = false;
+		var items = tradeItem.getItems();
+		if (items != null && items.size() > 1) {
+			var localItem = items[1];
+
+		   if (!isEmpty(localItem)) {
+                           var category = localItem.getCtgItemCategories();
+                           //out.writeln("got the cat");
+                           var size = category.size();
+                           var i=0;
+                            while(i<size){
+                                           //out.writeln("path :" + category[i].getPathValue());
+                                           if(category[i].getPathValue() == categoryName){
+                                                isInteroperable = true;
+                                            break;
+                                           }
+                                             i=i+1;
+                             }
+		       setScriptContextValue(categoryName, isInteroperable);
+	               } } }
+                   //out.writeln("From Script returning " + isInteroperable);
+	return isInteroperable;
+}
+
+function isValidBoolean(attribute){
+	 //out.writeln ("isValidBoolean" );
+  if ( !isEmpty(attribute) && ((attribute == "true") || (attribute == "false"))){
+     return true; }
+  else {
+         return false;
+       }
+
+}
+
+function checkTotalDigits(number, totalDigits, checkLeft, toLeft, checkRight, toRight) {
+	//out.writeln ("checkTotalDigits" );
+	if (number.lastIndexOf(".") >= 0) { //Check for the decimal value
+		var dotIndex = number.lastIndexOf(".");
+		var integerPart = substring(number, 0, dotIndex);
+		var fractionPart = substring(number, dotIndex + 1);
+
+		//check total length
+		//assuming that right value is zero.i.e 111.0
+		if (!isEmpty(fractionPart) && fractionPart == "0") {
+			if (!isCharacterLengthValid(integerPart, totalDigits)) {
+				return false;
+			}
+		}
+
+		if (checkLeft && !isEmpty(fractionPart) && fractionPart != "0") {
+			if (!isCharacterLengthValid(integerPart, toLeft)) {
+				return false;
+			}
+		}
+
+		if (checkRight && !isEmpty(fractionPart) && fractionPart != "0") {
+			if (!isCharacterLengthValid(fractionPart, toRight)) {
+				return false;
+			}
+		}
+	} else {
+		if (!isCharacterLengthValid(number, totalDigits)) {
+			return false;
+		}
+	}
+	return true;
+}
+
+
+function validateProductDescription(tradeItem,sAttributePath) {
+
+       var text = getTradeItemMultiValueAttributeValueSS(tradeItem,"Global_Local_Attributes_Spec/productDescription/text");
+       var tm= getTradeItemAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/TargetMarket");
+       if(tm == "FR" && isEmpty(text)){
+         return "PRODUCT_DESCRIPTION_NOT_EMPTY_FOR_FRANCE";
+       }
+     return null;
+}
+
+
+function validateDrainedWeight(tradeItem, sAttributePath) {
+
+		var sNetWeight = getTradeItemAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/netWeight/value");
+		var sDrainedWeight = getTradeItemAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/drainedWeight/value");
+		var sGrossWeight = getTradeItemAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/grossWeight/value");
+
+		if (!isEmpty(sDrainedWeight)){
+		     if(toDouble(sDrainedWeight) > toDouble(sNetWeight)) {
+			return "DRAINED_WEIGHT_MUST_BE_LESS_THAN_EQUAL_NET_WEIGHT";
+		     }
+
+		     if(toDouble(sDrainedWeight) > toDouble(sGrossWeight)) {
+			return "DRAINED_WEIGHT_MUST_BE_LESS_THAN_EQUAL_GROSS_WEIGHT";
+		     }
+		} 
+		return null;
+}
+
+
+function validateBrandName(tradeItem,sAttributePath) {
+
+     var brandName = getTradeItemAttributeValueSS(tradeItem, "Global_Attributes_Spec/brandName");      
+     if(isEmpty(brandName)){
+       return "BRAND_NAME_CANNOT_BE_EMPTY";
+     }
+     return null;
+}
+
+function validateInvoiceUnit(tradeItem, sAttributePath){
+
+	var mAttrValMap= getTradeItemMultiValueAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/isInvoiceUnit/value");
+	    var contains = false;
+	   forEachHmElement(mAttrValMap, path, value){
+	       if (!isEmpty(value)){
+		    contains=true;
+	     }
+	   }
+	   if(contains ==  false){
+		return "MANDATORY";
+	  }
+
+   return null;
+}
+
+function validateCanceledDate(tradeItem, sAttributePath){
+
+  var cancelDate = getTradeItemAttributeValueSS(tradeItem, "Global_Attributes_Spec/CanceledDate");
+  var discontinueDate = getTradeItemAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/discontinueDate");
+	    if(!isEmpty(cancelDate) && !isEmpty(discontinueDate))
+	    {
+		return "MANDATORY";
+	    }
+
+   return null;
+}
+//Validate the UOM for the value
+function validateUOM(tradeItem, sAttributePath) {
+	var sUOM = getTradeItemAttributeValueSS(tradeItem, sAttributePath);
+	var sValueAttributePath = sAttributePath.parseFixedWidth(toInteger("0"), sAttributePath.lastIndexOf("/")) + "/value";
+	var sVal = getTradeItemAttributeValueSS(tradeItem, sValueAttributePath);
+
+	if ((sVal != "" && sVal > 0) && isEmpty(sUOM)) {
+		return "INVALID_UOM";
+	}
+
+	if (!isEmpty(sUOM) && isEmpty(sVal)) {
+		return "INVALID_VALUE";
+	}
+
+	return null;
+}
+
+//Validates the unit of measure for depth, height, width and diameter for trade item.
+// Depth, Height & Width rule: These attribute are optional when an item is an non-consumer unit and a DSD item(value for DSD can be "ZB" or "ZC")
+// Therefore the following conditions must apply on the item: Consumer Unit Indicator is "false" and Primary Delivery Method is "DSD".
+// Otherwise, these attributes are mandatory.
+function validateDimensions(tradeItem, sAttributePath) {
+	var sConsumerUnit = getTradeItemAttributeValueSS(tradeItem, "Global_Attributes_Spec/IsTradeItemAConsumerUnit") ;
+	if(sConsumerUnit){
+		var sXUOM = getTradeItemAttributeValueSS(tradeItem, sAttributePath);
+		if (!isEmpty(sXUOM)) {
+			var sDepthUOM = getTradeItemAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/depth/uom");
+			var sHeightUOM = getTradeItemAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/height/uom");
+			var sWidthUOM = getTradeItemAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/width/uom");
+			var sDiameterUOM = getTradeItemAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/diameter/uom");
+
+			if (isEmpty(sWidthUOM) || sWidthUOM != sXUOM) {
+				return false;
+			} else if (isEmpty(sDepthUOM) || sDepthUOM != sXUOM) {
+				return false;
+			} else if (isEmpty(sHeightUOM) || sHeightUOM != sXUOM) {
+				return false;
+			} else if (!isEmpty(sDiameterUOM) && sDiameterUOM != sXUOM) {
+				return false;
+			} else {
+				return true;
+			}
+		}else {
+			return true;
+		}
+	} else {
+		return true;
+	}
+}
+
+//Validates the unit of measure for gross weight, packaging weight, net weight and drained weight for trade item.
+function validateWeight(tradeItem, sAttributePath) {
+	var sXUOM = getTradeItemAttributeValueSS(tradeItem, sAttributePath);
+
+	if (!isEmpty(sXUOM)) {
+		var sGrossWidthUOM = getTradeItemAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/grossWeight/uom");
+		var sNetWeightUOM = getTradeItemAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/netWeight/uom");
+		var sDrainedWeightUOM = getTradeItemAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/drainedWeight/uom");
+
+		if (!isEmpty(sGrossWidthUOM) && sGrossWidthUOM != sXUOM) {
+			return false;
+		} else if (!isEmpty(sNetWeightUOM) && sNetWeightUOM != sXUOM) {
+			return false;
+		} else if (!isEmpty(sDrainedWeightUOM) && sDrainedWeightUOM != sXUOM) {
+			return false;
+		} else {
+			return true;
+		}
+	} else {
+		return true;
+	}
+}
+
+
+
+function validateTradeQuantity(tradeItem, sAttributePath) {
+	var sOrderQtyUOM = getTradeItemAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/orderQuantityMultiple/uom");
+	var sXOrderQtyUOM = getTradeItemAttributeValueSS(tradeItem, sAttributePath);
+
+	if (sOrderQtyUOM != sXOrderQtyUOM) {
+		return false;
+	} else {
+		return true;
+	}
+}
+
+function isHazardGroupMandatory(tradeItem, path) {
+	//Becomes required if any of the below attribute is populated.
+	//Dangerous Goods Class Code (GDSN CIN)
+	//Dangerous Goods Hazardous Code (GDSN CIN)
+	//Dangerous Goods Regulation Code (GDSN CIN)
+	//Flash Point Temperature (GDSN CIN)
+	//Flash Point Temperature UOM (GDSN CIN)
+	//U.N.Dangerous Goods Number (GDSN CIN)
+	//Dangerous Goods Shipping Name (GDSN CIN)
+	//Dangerous Goods A Margin Number (GDSN CIN)
+	//Dangerous Goods Packing Group (GDSN CIN)
+	//Dangerous Goods Technical Name (GDSN CIN)
+	//out.writeln("isHazardGroupMandatory");
+	var sHazardCode = getTradeItemMultiValueAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/hazardousMaterial/dangerousGoods/hazardousCode");
+	var sDangGoodsAMarginNo = getTradeItemMultiValueAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/hazardousMaterial/dangerousGoods/aMarginNumber");
+	var sDangGoodsRegCode = getTradeItemMultiValueAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/hazardousMaterial/dangerousGoodsRegulationCode");
+	var sDangGoodsPackGrp = getTradeItemMultiValueAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/hazardousMaterial/dangerousGoods/packingGroup");
+	var sDangGoodsShipName = getTradeItemMultiValueAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/hazardousMaterial/dangerousGoods/shippingName/text");
+	var sDangGoodsTecName = getTradeItemMultiValueAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/hazardousMaterial/dangerousGoods/technicalName/text");
+    var sFlashPtTempValue = getTradeItemMultiValueAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/hazardousMaterial/flashPointTemperature/value");
+	var sFlashPtTempUOM = getTradeItemMultiValueAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/hazardousMaterial/flashPointTemperature/uom");
+	var sUnDangGdsNo = getTradeItemMultiValueAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/hazardousMaterial/dangerousGoods/unDangerousGoodsNumber");
+	var sHazMatClassCode = getTradeItemMultiValueAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/hazardousMaterial/dangerousGoods/classCode");
+	var relPath = substring(path,0,path.indexOf("#")+substring(path,path.indexOf("#")).indexOf("/"));
+
+ if (!isEmpty(sHazardCode[relPath+"/dangerousGoods/hazardousCode"]) || !isEmpty(sDangGoodsAMarginNo[relPath+"/dangerousGoods/aMarginNumber"]) || !isEmpty(sDangGoodsRegCode[relPath+ "/dangerousGoodsRegulationCode"]) || !isEmpty(sDangGoodsPackGrp[relPath+"/dangerousGoods/packingGroup"]) || !isEmpty(sDangGoodsShipName[relPath+"/dangerousGoods/shippingName/text"]) || !isEmpty(sDangGoodsTecName[relPath+ "/dangerousGoods/technicalName/text"]) || !isEmpty(sFlashPtTempValue[relPath+ "/flashPointTemperature/value"]) || !isEmpty(sFlashPtTempUOM[relPath+ "/flashPointTemperature/uom"]) || !isEmpty(sUnDangGdsNo[relPath+ "/dangerousGoods/unDangerousGoodsNumber"]) || !isEmpty(sHazMatClassCode[relPath+ "/dangerousGoods/classCode"])) {
+		//out.writeln("returning true")	;
+	 return true;
+	} else {
+		return false;
+	}
+}
+
+//*********************Attribute Specific Functions*****************************
+function validateFGTIN(tradeItem, sAttributePath) {
+	var sGTIN = getTradeItemAttributeValueSS(tradeItem, sAttributePath);
+	if (!isEmpty(sGTIN) && validateGTIN(sGTIN) == false) {
+		return "INVALID_GTIN";
+	} else {
+		return null;
+	}
+}
+
+
+//Validates the GLN
+function validateFGLN(tradeItem, sAttributePath) {
+	var sGLN = getTradeItemAttributeValueSS(tradeItem, sAttributePath);
+
+	if (!isEmpty(sGLN) && (validateGLN(sGLN) == false)) {
+		return "INVALID_GLN";
+	} else {
+		return null;
+	}
+}
+
+function isInValidUOMValue(tradeItem, sAttrPath, depntName)
+{
+	var attribUOMMap = [];
+	var attribVALMap = [];
+	if("value" == depntName)
+	{
+		attribUOMMap = getTradeItemMultiValueAttributeValueSS(tradeItem, sAttrPath);
+		attribVALMap = getTradeItemMultiValueAttributeValueSS(tradeItem, substring(sAttrPath,0,(sAttrPath.lastIndexOf("/")+1))+depntName);
+		forEachHmElement(attribUOMMap, uomPath, uomValue)
+		{
+			var valuePath = substring(uomPath,0,(uomPath.lastIndexOf("/")+1)) + depntName;
+			if(isEmpty(uomValue) && !isEmpty(attribVALMap[valuePath]))
+			{
+				return true;
+			}
+		}
+	}
+	else
+	{
+		attribVALMap = getTradeItemMultiValueAttributeValueSS(tradeItem, sAttrPath);
+		attribUOMMap = getTradeItemMultiValueAttributeValueSS(tradeItem, substring(sAttrPath,0,(sAttrPath.lastIndexOf("/")+1))+depntName);
+		forEachHmElement(attribVALMap, valPath, valueValue)
+		{
+			var uomPath = substring(valPath,0,(valPath.lastIndexOf("/")+1))+ depntName;
+			if(isEmpty(valueValue) && !isEmpty(attribUOMMap[uomPath]))
+			{
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
+function validateMultiValueUOM(tradeItem,sAttrPath)
+{
+	if(isInValidUOMValue(tradeItem, sAttrPath, "uom"))
+	{
+		return "INVALID_VALUE";
+	}
+	return null;
+
+}
+
+//Validates the rules for Ordering Unit Indicator
+function validateOrderingUnitIndicator(tradeItem, sAttributePath) {
+
+   var isPresent = false;
+   var sOrderingUnitIndicator = getTradeItemMultiValueAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/isOrderableUnit/value");
+    	forEachHmElement(sOrderingUnitIndicator, OKEY, OVALUE){
+        	if(!isEmpty(OVALUE)){
+           	 isPresent = true;
+      }
+    }
+
+    if(isPresent == false){
+       return "ORDERABLE_UNIT_INDICATOR_REQUIRED";
+    }
+
+    return null;
+  }
+
+function validateNetWeight(tradeItem, sAttributePath) {
+
+	var netWeight = getTradeItemAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/netWeight/value");
+	
+	if(!isEmpty(netWeight) && toDouble(netWeight) <= 0){
+	  return "NETWIEGHT_MUST_BE_GREATER_ZERO";
+	}
+
+	return null;
+
+}
+function validateGrossWeight(tradeItem, sAttributePath) {
+	var res = validateMultiValueUOM(tradeItem, sAttributePath);
+	if(null != res)
+	{
+		return res;
+	}
+	
+	var GrossWeight = getTradeItemAttributeValueSS(tradeItem, sAttributePath);
+		
+	var sOrderingUnitIndicator = getTradeItemAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/isOrderableUnit/value");
+  
+	if((isEmpty(GrossWeight) || toDouble(GrossWeight) < 0)){
+		return "GROSS_WEIGHT_MUST_NOT_BE_EMPTY";
+	}
+	// change validation for 3.1.3 change
+	if(sOrderingUnitIndicator == true && (isEmpty(GrossWeight) || toDouble(GrossWeight) < 0)){
+	  return "GROSS_WEIGHT_MUST_NOT_BE_EMPTY";
+	}
+ 
+	var GrossWeightUOM = getTradeItemAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/grossWeight/uom");
+	var attribMap = getTradeItemMultiValueAttributeValueSS(tradeItem, "Global_Attributes_Spec/netContent/value");
+	var uomattribMap = getTradeItemMultiValueAttributeValueSS(tradeItem, "Global_Attributes_Spec/netContent/uom");
+	var total=0;
+   
+	     forEachHmElement(attribMap, OKEY, OVALUE)
+		{
+                  var uomStr = substring(OKEY,0,OKEY.indexOf("/value"));
+		  if(!isEmpty(OVALUE)  && GrossWeightUOM  == uomattribMap[uomStr+"/uom"]){
+		     total=total+toDouble(OVALUE);
+		   }
+		 }
+		 
+	//error code - 316
+	if(attribMap.size() != 0 && total > toDouble(GrossWeight)){
+	    return "GROSS_WEIGHT_MUST_BE_GREATER_THAN_NETCONTENT";
+	}
+	
+	var NW = getTradeItemAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/netWeight/value");
+	var totalNW=toDouble(NW);
+
+	//error code - gdsn201
+	if(!isEmpty(NW) && !isEmpty(GrossWeight) && toDouble(NW) > toDouble(GrossWeight)){
+	    return "GROSS_WEIGHT_MUST_BE_GREATER_THAN_NETWEIGHT";
+	}
+
+	return null;
+  }
+
+function validateItemPackedIrrandWeight(tradeItem, sAttributePath)
+{
+	//out.writeln("validateItemPackedIrrandWeight");
+	if("Global_Attributes_Spec/tradeItemCompositionDepth/value" == sAttributePath || "Global_Attributes_Spec/tradeItemCompositionWidth/value" == sAttributePath)
+	{
+		var res = validateMultiValueUOM(tradeItem, sAttributePath);
+		if(null != res)
+		{
+			return res;
+		}
+	}
+
+	var sItemPackedIrregularly = getTradeItemAttributeValueSS(tradeItem, "Global_Attributes_Spec/isTradeItemPackedIrregularly");
+	var hiValue = getTradeItemAttributeValueSS(tradeItem,"Global_Attributes_Spec/Hi");
+	var tiValue = getTradeItemAttributeValueSS(tradeItem,"Global_Attributes_Spec/Ti");
+	var compWidthMap = getTradeItemMultiValueAttributeValueSS(tradeItem, "Global_Attributes_Spec/tradeItemCompositionWidth/value");
+	var compDepthMap = getTradeItemMultiValueAttributeValueSS(tradeItem, "Global_Attributes_Spec/tradeItemCompositionDepth/value");
+	if("false" == sItemPackedIrregularly)
+	{
+			var compWidhtUOMMap = getTradeItemMultiValueAttributeValueSS(tradeItem, "Global_Attributes_Spec/tradeItemCompositionWidth/uom");
+			var compDepthUOMMap = getTradeItemMultiValueAttributeValueSS(tradeItem, "Global_Attributes_Spec/tradeItemCompositionDepth/uom");
+			forEachHmElement(compWidthMap, widthPath, compWidthValue)
+			{
+				if(!isEmpty(compWidthValue))
+				{
+					var widthRelPath = substring(widthPath,0,widthPath.lastIndexOf("#")+substring(widthPath,widthPath.lastIndexOf("#")).indexOf("/value"));
+					var compWidthUOM =  compWidhtUOMMap[widthRelPath+"/uom"];
+					forEachHmElement(compDepthUOMMap, depthUOMPath, compDepthUOM)
+					{
+						//error code - 446
+						if(compWidthUOM == compDepthUOM && compWidthUOM == "EA")
+						{
+							var depthRelPath = substring(depthUOMPath,0,depthUOMPath.lastIndexOf("#")+substring(depthUOMPath,depthUOMPath.lastIndexOf("#")).indexOf("/uom"));
+							var compDepthValue = compDepthMap[depthRelPath+"/value"];
+							if(!isEmpty(compDepthValue))
+							{
+								var packValue = getTradeItemAttributeValueSS(tradeItem, "Global_Attributes_Spec/Pack");
+								if(toInteger(packValue) != (toInteger(compDepthValue) * toInteger(compWidthValue) * toInteger(hiValue)))
+								{
+									return "PACK_VALIDATION_FAILED_1";
+								}
+							}
+						}
+					}
+				}
+			}
+			return null;
+		}
+	return null;
+}
+
+function validatePackValueAndItemIrrPackProd(tradeItem, sAttributePath){
+	//out.writeln("validatePackValueAndItemIrrPackProd");
+	var packValue = "";
+	if("Global_Attributes_Spec/Pack" == sAttributePath)
+	{
+		packValue = getTradeItemAttributeValueSS(tradeItem, sAttributePath);
+		var sProdType = getTradeItemAttributeValueSS(tradeItem, "Global_Attributes_Spec/ProductType");
+		if("EA" != sProdType)
+		{
+			if(isEmpty(packValue))
+			{
+				return "MANDATORY";
+			}
+			if(toInteger(packValue) < 1)
+			{
+				return "PACK_VALUE_VALIDATION_FAILED";
+			}
+		}
+	}else
+	{
+		packValue = getTradeItemAttributeValueSS(tradeItem, "Global_Attributes_Spec/Pack");
+	}
+
+	var sItemPackedIrregularly = getTradeItemAttributeValueSS(tradeItem, "Global_Attributes_Spec/isTradeItemPackedIrregularly");
+	var hiValue = getTradeItemAttributeValueSS(tradeItem,"Global_Attributes_Spec/Hi");
+	var tiValue = getTradeItemAttributeValueSS(tradeItem,"Global_Attributes_Spec/Ti");
+
+	if("false" == sItemPackedIrregularly && !isEmpty(tiValue) && !isEmpty(hiValue))
+	{
+	   //error code - 473
+		if(!isEmpty(packValue) && (toInteger(packValue) != (toInteger(tiValue)*toInteger(hiValue))))
+		{
+			return "PACK_VALIDATION_FAILED";
+		}
+	}
+	return null;
+}
+
+//Validates the Num of Items in a Complete Layer/GTIN Pallet
+function validateHiTi(tradeItem, sAttributePath) {
+
+	var res = validatePackValueAndItemIrrPackProd(tradeItem, sAttributePath);
+	if(null != res)
+	{
+		return res;
+	}
+	if("Global_Attributes_Spec/Hi" == sAttributePath)
+	{
+		res = validateItemPackedIrrandWeight(tradeItem, sAttributePath);
+		if(null != res)
+		{
+			return res;
+		}
+	}
+	//It is recommended you populate this attribute if "Product Type" is PL (Pallet).
+	var sProdType = getTradeItemAttributeValueSS(tradeItem, "Global_Attributes_Spec/ProductType");
+	var sRes = getTradeItemAttributeValueSS(tradeItem, sAttributePath);
+	//DO NOT FORCE USER TO ENTER VALUES FOR RECOMMENDED VALIDATIONS
+	if (!isEmpty(sProdType) && sProdType == "PL" && isEmpty(sRes)) {
+		return "VALIDATE_HI_TI_FAILED";
+	}
+
+	return null;
+
+}
+
+function validateAltIDMainAgencyAndNum(tradeItem, sAttributePath) {
+	//Becomes required Alternate Item Number is populated.
+	var hmAltIDMainAgencies = getTradeItemMultiValueAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/alternateItemIdentification/agency");
+	var hmAltItemNums = getTradeItemMultiValueAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/alternateItemIdentification/id");
+
+	forEachHmElement(hmAltItemNums,  path,  sAltItemNum){
+		if(isEmpty(hmAltIDMainAgencies[substring(path,0,path.lastIndexOf("/"))+"/agency"]) && !isEmpty(sAltItemNum)){
+			return "VALIDATE_ALT_ITEM_MAINT_AGENCY_FAILED";
+	}else if(!isEmpty(hmAltIDMainAgencies[substring(path,0,path.lastIndexOf("/"))+"/agency"]) && isEmpty(sAltItemNum)){
+				return "VALIDATE_ALT_ITEM_FAILED";
+			}
+  }
+  return null;
+}
+
+
+function validateDimensionsUOM(tradeItem, sAttributePath) {
+	//The unit of measure for depth, height, width and diameter must be consistent for each trade item.
+	var bRes = validateUOM(tradeItem, sAttributePath);
+	if (bRes != null) {
+		return bRes;
+	} else if (!validateDimensions(tradeItem, sAttributePath)) {
+		return "VALIDATE_DIMENSIONS_FAILED";
+	} else {
+		return null;
+	}
+}
+
+function validateWeightUOM(tradeItem, sAttributePath) {
+	//Unit of measure for gross weight, packaging weight, net weight and drained weight must be consistent for each trade item.
+	var bRes = validateUOM(tradeItem, sAttributePath);
+	if (bRes != null) {
+		return bRes;
+	} else if (!validateWeight(tradeItem, sAttributePath)) {
+		return "VALIDATE_WEIGHT_FAILED";
+	} else {
+		return null;
+	}
+}
+
+function validateDescriptiveSize(tradeItem, sAttributePath){
+
+   var sConsumerUnitIndicator = getTradeItemAttributeValueSS(tradeItem, "Global_Attributes_Spec/IsTradeItemAConsumerUnit");
+    var tm= getTradeItemAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/TargetMarket");
+   if(tm == "SE"){
+
+      var desc= getTradeItemMultiValueAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/productSize/descriptiveSize/languageCode");
+      var contains=false;
+
+	    forEachHmElement(desc, path, value){
+	       if (!isEmpty(value) && value == "sv"){
+		    contains=true;
+	     }
+	   }
+	   if(contains == false){
+	      return "SWEDISH_DESCRIPTIVE_SIZE_MISSING";
+	   }
+         contains = false;
+	 if(sConsumerUnitIndicator == "true"){
+	   var productName = getTradeItemMultiValueAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/ProductName/text");
+	   var descSize= getTradeItemMultiValueAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/productSize/descriptiveSize/text");
+		forEachHmElement(productName, path, value){
+		    forEachHmElement(descSize, descpath, descvalue){
+		       if (!isEmpty(value) && value == descvalue){
+			    contains=true;
+		       }
+		     }
+	      }
+	     if( contains == true){
+	       return "PRODUCT_NAME_CANNOT_BE_SAME_AS_DESCR_SIZE";
+	     }
+	 }
+    }
+   return null;
+}
+
+function validateDispatchUnit(tradeItem, sAttributePath){
+
+	var tm= getTradeItemAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/TargetMarket");
+	var mAttrValMap= getTradeItemMultiValueAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/isDispatchUnit/value");
+	var contains = false;
+	   forEachHmElement(mAttrValMap, path, value){
+	       if (!isEmpty(value)){
+		    contains=true;
+	     }
+	   }
+	   if(contains ==  false){
+		return "MANDATORY";
+	  }
+	var sGrossWeight = getTradeItemAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/grossWeight/value");
+	 forEachHmElement(mAttrValMap, path, value){
+	       if (!isEmpty(value) && value == "true" && (isEmpty(sGrossWeight) && toDouble(sGrossWeight) <=0)){
+		    return "GROSS_WEIGHT_MUST_BE_GREATER_THAN_ZERO";
+	     }
+	   }
+
+        if(tm == "SE"){
+
+	    
+	    var sf= getTradeItemAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/stackingFactor");
+	    var contains=false;
+
+	    forEachHmElement(mAttrValMap, path, value){
+	       if (!isEmpty(value) && value == "true"){
+		    contains=true;
+	     }
+	   }
+
+	   if(contains == true && isEmpty(sf)){
+	      return "STACKING_FACTOR_MANDATORY";
+	   }
+    }
+
+   return null;
+}
+
+function validateTradeItemNonPhysical(tradeItem, sAttributePath){
+	var sTradeItemNonPhysicalIndicator = getTradeItemAttributeValueSS(tradeItem, "Global_Attributes_Spec/IsTradeItemNonPhysical");
+	var mAttrValMap= getTradeItemMultiValueAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/isDispatchUnit/value");
+	var sGrossWeight = getTradeItemAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/grossWeight/value");
+	
+	var contains = false;
+	   forEachHmElement(mAttrValMap, path, value){
+	       if (!isEmpty(value)){
+		    contains=true;
+	     }
+	   }
+	if(contains == true){
+		if (("false" == sTradeItemNonPhysicalIndicator) || ("" == sTradeItemNonPhysicalIndicator) || (null == sTradeItemNonPhysicalIndicator) ){
+		  if ((isEmpty(sGrossWeight) && toDouble(sGrossWeight) <=0)){
+		    return "GROSS_WEIGHT_MUST_BE_GREATER_THAN_ZERO_FOR_ISTRADEITEMNONPHYSICAL";
+	     }
+		}
+	}
+	return null;
+}
+
+function validateProductSizeCodeMainAgency(tradeItem, sAttributePath) {
+	//Becomes required if Product Size Code attribute is populated.
+	var hmProdSizeType = getTradeItemMultiValueAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/productSize/maintenanceAgency");
+	var hmProdSizeCodes = getTradeItemMultiValueAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/productSize/code");
+	forEachHmElement(hmProdSizeCodes,  path,  prodSizeCode){
+		var relpath = substring(path,0,path.indexOf("#")+substring(path,path.indexOf("#")).indexOf("/"))+"/maintenanceAgency";
+	if (!isEmpty(prodSizeCode) && isEmpty(hmProdSizeType[relpath])) {
+		return "VALIDATE_PROD_SIZE_TYPE_FAILED";
+	}else if(!isEmpty(hmProdSizeType[relpath]) && isEmpty(prodSizeCode)){
+		return "VALIDATE_PROD_SIZE_CODE_FAILED";
+		}
+  }
+	return null;
+
+}
+
+function validateNetWeightAndNetContent(tradeItem, sAttributePath) {
+	//out.writeln("validateNetWeightAndNetContent");
+	//Becomes required if Consumer Unit Indicator is Yes/true. and
+	//Target Market is
+	//Australia
+	//New Zealand
+	//Sweden
+	//Hungary
+	//Netherlands
+	//Canada
+	//US
+	var res = validateMultiValueUOM(tradeItem, sAttributePath);
+	if(null != res)
+	{
+		return res;
+	}
+	var sConsumerUnitIndicator = getTradeItemAttributeValueSS(tradeItem, "Global_Attributes_Spec/IsTradeItemAConsumerUnit");
+	var tm = getTradeItemAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/TargetMarket");
+	if ("true" == sConsumerUnitIndicator && ("US" == tm || "AU" == tm || "CA" == tm || "NZ" == tm  || "NL" == tm || "HU" == tm || "SE" == tm))
+	{
+		var hmNetContent = getTradeItemMultiValueAttributeValueSS(tradeItem, "Global_Attributes_Spec/netContent/value");
+		forEachHmElement(hmNetContent, netPAth, netValue)
+		{
+			if(isEmpty(netValue))
+			{
+				return "NET_CONTENT_CONSUMER_UNIT_INDICATOR_TRUE";
+			}
+		}
+		return null;
+	}
+	return null;
+}
+
+function validateMandatoryRddAttributes(tradeItem, sAttributePath)
+{
+	var mAttrValMap = getTradeItemMultiValueAttributeValueSS(tradeItem, sAttributePath);
+	if(null == mAttrValMap || mAttrValMap.size() == 0)
+	{
+		return "MANDATORY";
+	}else
+	{
+		var dataRCPPath = substring(sAttributePath,0,sAttributePath.lastIndexOf("/"))+"/dataRecipientGLN";
+		var dataRCPMap = getTradeItemMultiValueAttributeValueSS(tradeItem, dataRCPPath);
+		var failed = true;
+		forEachHmElement(mAttrValMap, path, value)
+		{
+			var relPath = substring(path,0,path.lastIndexOf("#")+substring(path,path.lastIndexOf("#")).lastIndexOf("/"));
+			if(!isEmpty(value) && isEmpty(dataRCPMap[relPath+"/dataRecipientGLN"]))
+			{
+				failed = false;
+				break;
+			}
+		}
+		if(failed)
+		{
+			return "MANDATORY_RDD_FAILED";
+		}
+		return null;
+	}
+}
+
+function validateAvailabilityDate(tradeItem, sAttributePath) {
+	//out.writeln("validateAvailabilityDate");
+	if("Global_Local_Attributes_Spec/startAvailabilityDate/value" == sAttributePath)
+	{
+		var res = validateMandatoryRddAttributes(tradeItem, sAttributePath);
+		if(null != res)
+		{
+			return res;
+		}
+	}
+	var sEndAvailability = getTradeItemAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/endAvailabilityDate/value");
+	
+	var sStartAvailability = getTradeItemAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/startAvailabilityDate/value");
+	var format = "yyyy-MM-dd-HH.mm.ss";
+	if (sStartAvailability != null) {
+		if (sStartAvailability.contains(":")) {
+			format = "dd-MMM-yyyy HH:mm:ss";
+		}
+	}
+	
+	if (!isEmpty(sEndAvailability)) {
+		if (sEndAvailability.contains(":")) {
+				format = "EEE MMM dd HH:mm:ss z yyyy";
+			}
+		var dToday = today();
+		var endAvailablityDate = new Date(format, sEndAvailability);
+		var flag = endAvailablityDate.isDateBefore(dToday);
+		if (endAvailablityDate.isDateBefore(dToday)) {
+			return "PAST_DATE";
+		} else {
+			if (!isEmpty(sStartAvailability)) {
+				var startAvailabilityDate = new Date(format, sStartAvailability);
+				if (endAvailablityDate.isDateBefore(startAvailabilityDate)) {
+					return "AVAILABILITYDATE_MISMATCH";
+				}
+			}
+		}
+	}
+	
+	return null;
+}
+
+function validateOrderSizingFactor(tradeItem, sAttributePath) {
+	var res = validateMultiValueUOM(tradeItem, sAttributePath);
+	if(null != res)
+	{
+		return res;
+	}
+	var sOrderingUnitIndicator = getTradeItemAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/isOrderableUnit/value");
+	var sOrderSizingFactor = getTradeItemAttributeValueSS(tradeItem, sAttributePath);
+	if (!isEmpty(sOrderSizingFactor) && (!isEmpty(OrderingUnitIndicator) && OrderingUnitIndicator == "true")) {
+		return "REQUIRED_ORDERABLE";
+	}
+	return null;
+}
+
+function validateSubBrand(tradeItem, sAttributePath) {
+	var sSubBrand = getTradeItemAttributeValueSS(tradeItem, sAttributePath);
+
+	if (!isEmpty(sSubBrand)) {
+		if (!isCharacterLengthValid(sSubBrand, 35)) {
+			return "WWRE_INVALID_LENGTH_35";
+		}
+	}
+
+	return null;
+}
+
+// Depth, Height & Width rule: These attribute are optional when an item is an non-consumer unit and a DSD item(value for DSD can be "ZB" or "ZC")
+// Therefore the following conditions must apply on the item: Consumer Unit Indicator is "false" and Primary Delivery Method is "DSD".
+// Otherwise, these attributes are mandatory.
+function validateDimensionsValue(tradeItem, sAttributePath) {
+		var sDepthValue = getTradeItemAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/depth/value");
+		var sHeightValue = getTradeItemAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/height/value");
+		var sWidthValue = getTradeItemAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/width/value");
+
+		var uom = getTradeItemAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/depth/uom");
+
+		if(uom == "MMT" && (sDepthValue.contains(".") ||  sHeightValue.contains(".") || sWidthValue.contains("."))){
+			return "CANNOT_HAVE_DECIMAL_POSITION_FOR_MILLIMETER";
+		}else if(uom != "MMT"){
+		   if(sDepthValue.contains(".")){
+		     var dec = sDepthValue.substring(sDepthValue.indexOf(".")+1);
+		     if(dec.length() > 3){
+		       return "CANNOT_HAVE_MORE_THAN_DECIMAL_POS";
+		     }
+		   }
+		   if(sHeightValue.contains(".")){
+		     var dec = sDepthValue.substring(sHeightValue.indexOf(".")+1);
+		     if(dec.length() > 3){
+		       return "CANNOT_HAVE_MORE_THAN_DECIMAL_POS";
+		     }
+		   }
+		   if(sWidthValue.contains(".")){
+		     var dec = sDepthValue.substring(sWidthValue.indexOf(".")+1);
+		     if(dec.length() > 3){
+		       return "CANNOT_HAVE_MORE_THAN_DECIMAL_POS";
+		     }
+		   }
+		}
+
+	return null;
+}
+
+//BMS v2.8 rule: For non-Consumer Units ONLY the GS1 Standard for Product Measurement states that for Width and Depth, width MUST be less than, or equal to, depth.
+function validateDepthWidthForNonConsumerItems(tradeItem, sAttributePath) {
+
+	var res = validateDimensionsValue(tradeItem, sAttributePath);
+	if(null != res)
+	{
+		return res;
+	}
+
+	var sConsumerUnit = getTradeItemAttributeValueSS(tradeItem, "Global_Attributes_Spec/IsTradeItemAConsumerUnit") ;
+	var sDepthValue = getTradeItemAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/depth/value");
+	var sWidthValue = getTradeItemAttributeValueSS(tradeItem, sAttributePath);
+
+	if(sConsumerUnit == "false") {
+		if(toInteger(sWidthValue) > toInteger(sDepthValue)){
+			return "WIDTH_GREATER_THAN_DEPTH";
+		}
+	}
+	return null;
+}
+
+function checkDependencies(tradeItem, attributes) {
+
+	var  emptyCount=0;
+	var  nonEmptyCount=0;
+	var size = attributes.size();
+	for(var i=0; i < size;i++)
+	{
+		//out.writeln("gs1 chek for :" +attributes[i]);
+		var value = getTradeItemAttributeValueSS(tradeItem, attributes[i]);
+		//out.writeln("gs1 value :" + value);
+		if(isEmpty(value))
+		{
+			if(nonEmptyCount > 0 )
+			{// some dependent is filled in, then error
+				//out.writeln("Returning False" + value);
+				return false;
+			}
+			emptyCount++;
+		} else
+		{
+			if(emptyCount > 0 )
+			{ // if one is filled all shud be filled
+				//out.writeln("Returning False" + value);
+				return false;
+			}
+			nonEmptyCount++;
+		}
+	}
+	return true;
+}
+
+
+function validateDiscontinueDate(tradeItem, sAttributePath) {
+	//out.writeln("validateDiscontinueDate");
+	// Commented for 3.1.3 as validation removed
+    //cDate = tradeItem.getTradeItemAttributeValueSS("Global_Attributes_Spec/CanceledDate");
+	
+    dDate = tradeItem.getTradeItemAttributeValueSS("Global_Local_Attributes_Spec/discontinueDate");
+	eDate = tradeItem.getTradeItemAttributeValueSS("TM_Additional_Attribute_Extension_Spec/effectiveDate");
+
+    
+	if(!isEmpty(dDate)){
+	    var format = "EEE MMM dd HH:mm:ss zzz yyyy";
+
+		//out.writeln("dDate-->"+dDate);                y
+		discontinueDate = new Date(format, dDate);
+ 	    //**if(!isEmpty(cDate)) {
+ 	    	//out.writeln("CD_DATE_VALIDATION_FAILED");
+ 	     //   return "CD_DATE_VALIDATION_FAILED";
+ 	    //}else if(discontinueDate.isDateBefore(validDate)) {
+	    	//out.writeln("DISCONTINUE_DATE_VALIDATION_FAILED");
+	      //  return "DISCONTINUE_DATE_VALIDATION_FAILED";
+	    //}**/
+		
+		if(!isEmpty(eDate)){
+			eDate = new Date(format, eDate);
+			discontinueDate = new Date(format, dDate);
+			eDate = eDate.addDate("MONTH",-6);
+			if(discontinueDate.isDateBefore(eDate)){
+				return "DISCONTINUE_DATE_OLDER_THAN_SIX_MONTH";
+			}
+		}
+   }
+    return null;
+}
+
+function validateGTINNameText(tradeItem, sAttributePath){
+//out.writeln("validateGTINNameText");
+
+ var textHm = getTradeItemMultiValueAttributeValueSS(tradeItem,"Global_Attributes_Spec/GTINName/text");
+ langCodeHm = getTradeItemMultiValueAttributeValueSS(tradeItem,"Global_Attributes_Spec/GTINName/languageCode");
+  var flag = false;
+forEachHmElement(textHm,  path, value){
+	var relpath = substring(path,0,path.indexOf("#")+substring(path,path.indexOf("#")).indexOf("/"));
+	var langCode = langCodeHm[relpath+"/languageCode"];
+	if((!isEmpty(value) && isEmpty(langCode)) || (isEmpty(value) && !isEmpty(langCode))){
+		return "GTINNAME_LANGCODE_REQUIRED";
+	}
+	if(!isEmpty(value)){
+		flag = true;
+	}
+
+}
+   if(!flag){
+   return "GTINNAME_NOTNULL";
+   }
+ return null;
+}
+
+function isTaxRateGroupMandatory(tradeItem, path) {
+	//The following are dependent attributes if one
+	//is populated, then all must be populated:
+	//Tax Rate
+	//Tax (Rate) Type Code
+	//Tax (Rate) Type Description (CRE079)
+	//Tax (Rate) Type Agency (CRE080)
+	//out.writeln("isTaxRateGroupMandatory");
+	var sTaxRate = getTradeItemMultiValueAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/taxRate/rate");
+	var sTaxAgencyCode = getTradeItemMultiValueAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/taxRate/agencyCode");
+	var sTaxTypeCode = getTradeItemMultiValueAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/taxRate/typeCode");
+	var sTaxTypeDesc = getTradeItemMultiValueAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/taxRate/typeDescription");
+	var relpath = substring(path,0,path.indexOf("#")+substring(path,path.indexOf("#")).indexOf("/"));
+	if (!isEmpty(sTaxRate[relpath+"/rate"]) || !isEmpty(sTaxAgencyCode[relpath+"/agencyCode"])
+		|| !isEmpty(sTaxTypeCode[relpath+"/typeCode"]) || !isEmpty(sTaxTypeDesc[relpath+"/typeDescription"])) {
+
+		return true;
+	}else {
+		return false;
+	}
+}
+
+function validatePallet(tradeItem,sAttributePath) {
+      var pti= getTradeItemAttributeValueSS(tradeItem,"Global_Local_Attributes_Spec/nonGTINPalletTi");
+      var phi= getTradeItemAttributeValueSS(tradeItem,"Global_Local_Attributes_Spec/nonGTINPalletHi");
+
+      if(toInteger(phi) > 0 && toInteger(pti) <= 0){
+         return "GTIN_PALLET";
+       }
+     return null;
+}
+
+
+
+function validateShortDescription(tradeItem,sAttributePath) {
+
+     var tm= getTradeItemAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/TargetMarket");
+     if(tm == "SE"){
+
+	      var descLang = getTradeItemMultiValueAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/shortDescription/languageCode");
+	      var shortDesc = getTradeItemMultiValueAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/shortDescription/text");
+	      var contains=false;
+	      forEachHmElement(shortDesc, path, value){
+	          var langPath=substring(path,0,path.indexOf("#")+substring(path,path.indexOf("#")).indexOf("/"));
+	          langPath=langPath+"/languageCode";
+	          var lang=descLang[langPath];
+
+	          if (!isEmpty(lang) && lang == "sv"){
+				    contains=true;
+	         }
+
+	       }
+
+	     if(contains == false){
+	       return "SWEDEN_INSTANCE";
+	     }
+	  }
+     return null;
+}
+
+function validateProductName(tradeItem,sAttributePath) {
+
+     var tm= getTradeItemAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/TargetMarket");
+     var isConsumerUnit = getTradeItemAttributeValueSS(tradeItem, "Global_Attributes_Spec/IsTradeItemAConsumerUnit");
+     var productName = getTradeItemMultiValueAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/ProductName/text");
+
+     if( tm == "DE" || tm == "IE"){
+        var contains = false;
+	   forEachHmElement(productName, path, value){
+	       if (!isEmpty(value)){
+		    contains=true;
+	     }
+	   }
+	   if(contains ==  false){
+		return "PRODUCT_NAME_CANNOT_BE_EMPTY";
+	  }
+     }
+     if(tm == "SE"){
+     
+	var productNameLangCode= getTradeItemMultiValueAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/ProductName/languageCode");
+
+	      var contains=false;
+	      forEachHmElement(productNameLangCode, path, value){
+		 if (!isEmpty(value) && value == "sv"){
+				    contains=true;
+	         }
+	       }
+	     if(contains == false){
+	       return "SWEDEN_INSTANCE";
+	     }
+
+       }
+     return null;
+}
+
+function isTaxAmountGroupMandatory(tradeItem, path) {
+	//The following are dependent attributes if one
+	//is populated, then all must be populated:
+	//Tax Amount (CRE074)
+	//Tax Amount Currency (CRE075)
+	//Tax (Amount) Type Description (CRE076)
+	//Tax (Amount) Type Agency (CRE077)
+	//Tax (Amount) Type Code (CRE078)
+	//out.writeln("isTaxAmountGroupMandatory");
+	var sTaxAmnt = getTradeItemMultiValueAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/taxAmount/amountValue");
+	var sTaxCurrency = getTradeItemMultiValueAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/taxAmount/currency");
+	var sTaxAgencyCode = getTradeItemMultiValueAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/taxAmount/agencyCode");
+	var sTaxTypeCode = getTradeItemMultiValueAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/taxAmount/typeCode");
+	var sTaxTypeDesc = getTradeItemMultiValueAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/taxAmount/typeDescription");
+	var relpath = substring(path,0,path.indexOf("#")+ substring(path,path.indexOf("#")).indexOf("/"));
+	//out.writeln("relpath-->"+relpath);
+	if (!isEmpty(sTaxAmnt[relpath+"/amountValue"]) || !isEmpty(sTaxCurrency[relpath+"/currency"])
+		|| !isEmpty(sTaxAgencyCode[relpath+"/agencyCode"]) || !isEmpty(sTaxTypeCode[relpath+"/typeCode"])
+		|| !isEmpty(sTaxTypeDesc[relpath+"/typeDescription"])) {
+		return true;
+	}else{
+		return false;
+	}
+}
+
+function validateSuggestedRetailEffectiveEndDate(tradeItem, sAttributePath){
+
+	//If "Suggested Retail Price Effective End Date" is popolated then the following attributes
+	//should also be populated.
+	//Suggested Retail Price
+	//Suggested Retail Price Currency
+	//Suggested Retail Price Basis Per Unit
+	//Suggested Retail Price Basis Per Unit UOM
+	//Suggested Retail Price Effective Start Date
+	//out.writeln("validateSuggestedRetailEffectiveEndDate");
+	var hmEffectiveEndDate = getTradeItemMultiValueAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/suggestedRetail/effectiveEndDate");
+	var hmRetailPrice = getTradeItemMultiValueAttributeValueSS(tradeItem, sAttributePath);
+
+	forEachHmElement(hmEffectiveEndDate, path, value){
+		var relPath = substring(path,0,path.indexOf("#")+substring(path,path.indexOf("#")).indexOf("/"))+"/price#0/value";
+	if(!isEmpty(value) && isEmpty(hmRetailPrice[relPath])){
+		return "VALIDATE_SUGGESTED_RETAIL_EFFECTIVE_END_DATE_FAILED";
+		}
+	}
+		return null;
+}
+
+function isSuggestedRetailGroupMandatory(tradeItem, path){
+	//The following are dependent attributes -- all five must be populated in order
+	//for any of the five to be synchronized:
+	//Suggested Retail Price
+	//Suggested Retail Price Currency
+	//Suggested Retail Price per Unit
+	//Suggested Retail Price Basis UOM
+	//Suggested Retail Price Effective Start Date
+	//out.writeln("isSuggestedRetailGroupMandatory");
+	var sRetailPrice = getTradeItemMultiValueAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/suggestedRetail/price/value");
+	var sRetailPriceCurrency = getTradeItemMultiValueAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/suggestedRetail/price/currency");
+	var sRetailPriceBasis = getTradeItemMultiValueAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/suggestedRetail/basisPerUnit/value");
+	var sRetailPriceBasisUOM = getTradeItemMultiValueAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/suggestedRetail/basisPerUnit/uom");
+	var sRetailPriceEffetiveStartDate = getTradeItemMultiValueAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/suggestedRetail/effectiveStartDate");
+	var relPath = substring(path,0,path.indexOf("#")+substring(path,path.indexOf("#")).indexOf("/"));
+	if (!isEmpty(sRetailPrice[relPath+"/price#0/value"]) || !isEmpty(sRetailPriceCurrency[relPath+"/price#0/currency"])
+		|| !isEmpty(sRetailPriceBasis[relPath+"/basisPerUnit#0/value"]) || !isEmpty(sRetailPriceBasisUOM[relPath+"/basisPerUnit#0/uom"])
+		|| !isEmpty(sRetailPriceEffetiveStartDate[relPath+"/effectiveStartDate"])) {
+		return true;
+		}else{
+			return false;
+			}
+}
+
+function validateSuggestedRetail(tradeItem, sAttributePath){
+	//The following are dependent attributes -- all five must be populated in order
+	//for any of the five to be synchronized:
+	//Suggested Retail Price
+	//Suggested Retail Price Currency
+	//Suggested Retail Price per Unit
+	//Suggested Retail Price Basis UOM
+	//Suggested Retail Price Effective Start Date
+	//out.writeln("validateSuggestedRetail");
+	if("Global_Local_Attributes_Spec/suggestedRetail/price/value" == sAttributePath)
+	{
+		var res = validateSuggestedRetailEffectiveEndDate(tradeItem, sAttributePath);
+		if(null != res)
+		{
+			return res;
+		}
+	}
+	var hmSuggestedRetailAttrib = getTradeItemMultiValueAttributeValueSS(tradeItem, sAttributePath);
+	forEachHmElement(hmSuggestedRetailAttrib, path, value){
+	if(isEmpty(value) && isSuggestedRetailGroupMandatory(tradeItem, path)){
+		return "VALIDATE_SUGGESTED_RETAIL_FAILED";
+		}
+	}
+	var hm=getTradeItemMultiValueAttributeValueSS(tradeItem,"Global_Local_Attributes_Spec/suggestedRetail/basisPerUnit/uom");
+	var tm = getTradeItemAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/TargetMarket");
+	var flag=true;
+	if(tm == "SE"){
+		forEachHmElement(hm, path, value){
+			if(value == "KG" || value == "GR" || value == "MR" || value == "ML" || value == "MM" || value == "LT" || value == "SM" || value == "PC" || value == "CR"){
+				flag=false;
+			}else{
+				flag=true;
+			}
+		}
+
+		if( flag == true){
+			return "INVALID_UOM_SWEDEN";
+		}
+	}
+		return null;
+}
+
+function validatePricingOnProduct(tradeItem, sAttributePath){
+	//Pricing On Product is Yes/true, then 1SYNC attribute Suggested
+	//Retail Price and corresponding dependent
+	//attributes must be populated.
+	//out.writeln("validatePricingOnProduct");
+	var pricingOnProduct = getTradeItemAttributeValueSS(tradeItem, sAttributePath);
+
+	if("true"== pricingOnProduct){
+		//priceOnPackIndicator can only be true on consumer unit GTINs
+		// Removed validation for 3.1.3
+		//**var isConsumerUnit = getTradeItemAttributeValueSS(tradeItem, "Global_Attributes_Spec/IsTradeItemAConsumerUnit");
+		//if(isEmpty(isConsumerUnit) || "false" == isConsumerUnit){
+		//	return "PRICING_ON_PRODUCT_CONSUMER_UNIT_VALIDATION_FAILED";
+		//}**/
+		var hmRetailPrice = getTradeItemMultiValueAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/suggestedRetail/price/value");
+		forEachHmElement(hmRetailPrice, path, value){
+			if(isEmpty(value)){
+				return "VALIDATE_PRICING_ON_PRODUCT_FAILED";
+			}
+		}
+		return null;
+	}
+	return null;
+}
+
+function isCatalogueRetailGroupMandatory(tradeItem, path){
+	//The following are dependent attributes -- all five must be populated in order
+	//for any of the five to be synchronized:
+	//List Price
+	//List Price Currency
+	//List Price Basis Per Unit
+	//List Price Basis Per Unit UOM
+	//List Price Effective Start Date
+	//out.writeln("isCatalogueRetailGroupMandatory");
+	var sListPrice = getTradeItemMultiValueAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/cataloguePrice/price/value");
+	var sListPriceCurrency = getTradeItemMultiValueAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/cataloguePrice/price/currency");
+	var sListPriceBasis = getTradeItemMultiValueAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/cataloguePrice/basisPerUnit/value");
+	var sListPriceBasisUOM = getTradeItemMultiValueAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/cataloguePrice/basisPerUnit/uom");
+	var sListPriceEffetiveStartDate = getTradeItemMultiValueAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/cataloguePrice/effectiveStartDate");
+	var relPath = substring(path,0,path.indexOf("#")+substring(path,path.indexOf("#")).indexOf("/"));
+	if (!isEmpty(sListPrice[relPath+"/price#0/value"]) || !isEmpty(sListPriceCurrency[relPath+"/price#0/currency"])
+		|| !isEmpty(sListPriceBasis[relPath+"/basisPerUnit#0/value"]) || !isEmpty(sListPriceBasisUOM[relPath+"/basisPerUnit#0/uom"])
+		|| !isEmpty(sListPriceEffetiveStartDate[relPath+"/effectiveStartDate"])) {
+			return true;
+		}else{
+			return false;
+			}
+}
+
+function validateCataloguePriceEffectiveEndDate(tradeItem, sAttributePath){
+
+	//If "List Price Effective End Date" is popolated then the following attributes
+	//should also be populated.
+	//List Price
+	//List Price Currency
+	//List Price Basis Per Unit
+	//List Price Basis Per Unit UOM
+	//List Price Effective Start Date
+	//out.writeln("validateCataloguePriceEffectiveEndDate");
+	var hmEffectiveEndDate = getTradeItemMultiValueAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/cataloguePrice/effectiveEndDate");
+	var hmListPrice = getTradeItemMultiValueAttributeValueSS(tradeItem, sAttributePath);
+	forEachHmElement(hmEffectiveEndDate, path, value){
+	var relPath = substring(path,0,path.indexOf("#")+substring(path,path.indexOf("#")).indexOf("/"))+"/price#0/value";
+	if(!isEmpty(value) && isEmpty(hmListPrice[relPath])){
+		return "VALIDATE_CATALOGUE_PRICE_EFFECTIVE_END_DATE_FAILED";
+		}
+    }
+		return null;
+
+}
+
+function validateCataloguePrice(tradeItem,sAttributePath){
+	//The following are dependent attributes -- all five must be populated in order
+	//for any of the five to be synchronized:
+	//List Price
+	//List Price Currency
+	//List Price Basis Per Unit
+	//List Price Basis Per Unit UOM
+	//List Price Effective Start Date
+	//out.writeln("validateCataloguePrice");
+	if("Global_Local_Attributes_Spec/cataloguePrice/price/value" == sAttributePath)
+	{
+		var res = validateCataloguePriceEffectiveEndDate(tradeItem, sAttributePath);
+		if(null != res)
+		{
+			return res;
+		}
+	}
+	var hmCataloguePriceAttrib = getTradeItemMultiValueAttributeValueSS(tradeItem, sAttributePath);
+	forEachHmElement(hmCataloguePriceAttrib, path, value){
+	if(isEmpty(value) && isCatalogueRetailGroupMandatory(tradeItem, path)){
+		return "VALIDATE_CATALOGUE_PRICE_FAILED";
+		}
+	}
+		return null;
+}
+
+function validateColor(tradeItem, sAttributePath) {
+	//the following are dependent
+	//attributes -- all three must be populated in
+	//order for any of the three to be synchronized:
+	//Color (GDSN CIN)
+	//Color Code Maintenance Agency (GDSN CIN)
+	//Product Color Description (GDSN CIN)
+	//out.writeln("validateColor");
+	var sColorAttrMap = getTradeItemMultiValueAttributeValueSS(tradeItem, sAttributePath);
+	forEachHmElement(sColorAttrMap, path, value){
+	var relpath = substring(path,0,path.indexOf("#")+substring(path,path.indexOf("#")).indexOf("/"));
+	if(path.indexOf("agency")>0){
+		skey1 = relpath + "/code";
+		skey2 = relpath + "/description#0/text";
+        hm = getTradeItemMultiValueAttributeValueSS(tradeItem,"Global_Local_Attributes_Spec/color/code");
+        vm = getTradeItemMultiValueAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/color/description/text");
+	}else if(path.indexOf("code")>0){
+		skey1 = relpath + "/agency";
+		skey2 = relpath + "/description#0/text";
+        hm = getTradeItemMultiValueAttributeValueSS(tradeItem,"Global_Local_Attributes_Spec/color/agency");
+        vm = getTradeItemMultiValueAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/color/description/text");
+	}else{
+		skey1 = relpath + "/agency";
+		skey2 = relpath + "/code";
+        hm = getTradeItemMultiValueAttributeValueSS(tradeItem,"Global_Local_Attributes_Spec/color/agency");
+        vm = getTradeItemMultiValueAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/color/code");
+		}
+		if (!isEmpty(sColorAttrMap[path]) && (isEmpty(hm[skey1]) || isEmpty(vm[skey2]))) {
+    		return "DEPENDENT_COLOR_GROUP_MANDATORY";
+    	}
+ }
+	return null;
+}
+
+//Validates the Product Type
+function validateProductType(tradeItem, sAttributePath) {
+	//out.writeln("validateProductType");
+	var res = validateMultiValueUOM(tradeItem, sAttributePath);
+	if(null != res)
+	{
+		return res;
+	}
+	//Do not populate if "Product Type" is PL (Pallet) "MOD PALLET MX (MIXED)" .
+	var sProdType = getTradeItemAttributeValueSS(tradeItem, "Global_Attributes_Spec/ProductType");
+	if ((!isEmpty(sProdType)) && (sProdType=="PL" || sProdType=="MX")) {
+		var sRes = getTradeItemAttributeValueSS(tradeItem, sAttributePath);
+			if(!isEmpty(sRes)){
+				return "VALIDATE_NUM_OF_ITEMS_PER_PALLET_FAILED";
+			}
+	}
+	return null;
+}
+
+function validateHeight(tradeItem, sAttributePath) {
+
+	var res = validateDimensionsValue(tradeItem, sAttributePath);
+	if(null != res)
+	{
+		return res;
+	}
+	var sProdType = getTradeItemAttributeValueSS(tradeItem, "Global_Attributes_Spec/ProductType");
+	if ((!isEmpty(sProdType)) && (sProdType=="PL" || sProdType=="MX")) {
+		var tm= getTradeItemAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/TargetMarket");
+		if(tm == "NL"){
+			var sHeightUOM = getTradeItemAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/height/uom");
+			var sHeightValue = getTradeItemAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/height/value");
+			if(!isEmpty(sHeightValue)){
+				if(sHeightUOM == "MM" && toInteger(sHeightValue) > 2600){
+					  return "HEIGHT_CANNOT_EXCEED";
+				}else if(sHeightUOM == "CM" && toInteger(sHeightValue) > 260){
+					  return "HEIGHT_CANNOT_EXCEED";
+				}
+			}
+		}
+	}
+	return null;
+}
+
+function validateBaseForEach(tradeItem, sAttributePath) {
+	//out.writeln("validateBaseForEach");
+	//Populate if "Product Type" is EA (Each).
+	sProdType = getTradeItemAttributeValueSS(tradeItem, "Global_Attributes_Spec/ProductType");
+	sRes = getTradeItemAttributeValueSS(tradeItem, sAttributePath);
+	if (isEmpty(sRes) && (!isEmpty(sProdType) && ("EA" == sProdType))) {
+		return "VALIDATE_BASE_UNIT_INDICATOR_FAILED";
+	}
+	//Alternative 2: The item has the isPackagingMarkedReturnable = true.
+	//Alternative 3: The item has the packagingTypeCode = not packed / unpacked (NE)
+	var tm = getTradeItemAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/TargetMarket");
+	if("true" == sRes && "SE" == tm) {
+	
+		//Alternative 2: The item has the isPackagingMarkedReturnable = true.
+		var packReturnable = getTradeItemAttributeValueSS(tradeItem,"Global_Local_Attributes_Spec/packagingMarkedReturnable");
+		if(!isEmpty(packReturnable) && "true" == packReturnable) {
+			return null;
+		}
+		//Alternative 3: The item has the packagingTypeCode = not packed / unpacked (NE)
+		var failedAlterThree = true;
+		var packagingType = getTradeItemMultiValueAttributeValueSS(tradeItem,"Global_Attributes_Spec/packagingType/code");
+		forEachHmElement(packagingType, key, value) {
+			if(!isEmpty(value) && ("UNP" == value || "NE" == value)) {
+				failedAlterThree = false;
+				break;
+			}
+		}
+		if(failedAlterThree) {
+			return "PACKAGING_MATERIAL_MANDATORY";
+		}
+	}
+	return null;
+}
+
+//All Should Be populated pegHorizontal,pegVertical and pegHole Number or NONE
+function validatePegMeasurementValues(tradeItem, sAttributePath)
+{
+	//out.writeln("validatePegMeasurementValues");
+    var attribMap = getTradeItemMultiValueAttributeValueSS(tradeItem, sAttributePath);
+    forEachHmElement(attribMap, OKEY, OVALUE)
+    {
+     var relpath = substring(OKEY,0,OKEY.indexOf("#")+substring(OKEY,OKEY.indexOf("#")).indexOf("/"));
+        if(OKEY.indexOf("Horizontal") > 0)
+        {
+            skey1 = relpath+ "/pegVertical/value";
+            skey2 = relpath+ "/pegHoleNumber";
+            hm = getTradeItemMultiValueAttributeValueSS(tradeItem,"Global_Local_Attributes_Spec/pegMeasurements/pegVertical/value");
+            vm = getTradeItemMultiValueAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/pegMeasurements/pegHoleNumber");
+        }
+		else if(OKEY.indexOf("Vertical") > 0)
+		{
+            skey1 = relpath+ "/pegHorizontal/value";
+            skey2 = relpath+ "/pegHoleNumber";
+            hm = getTradeItemMultiValueAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/pegMeasurements/pegHorizontal/value");
+            vm = getTradeItemMultiValueAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/pegMeasurements/pegHoleNumber");
+        }
+        else
+        {
+            skey1 = relpath+ "/pegHorizontal/value";
+            skey2 = relpath+ "/pegVertical/value";
+            hm = getTradeItemMultiValueAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/pegMeasurements/pegHorizontal/value");
+            vm = getTradeItemMultiValueAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/pegMeasurements/pegVertical/value");
+        }
+        if (isEmpty(OVALUE) &&(!isEmpty(hm[skey1]) || !isEmpty(vm[skey2])))
+        {
+            return "VALIDATE_PEG_MEASUREMENTS";
+        }
+    }
+    return null;
+}
+
+//Validates the unit of measure for pegHorizontal and pegVertical.
+function validatePegMeasurementUOM(tradeItem, sAttributePath) {
+	//out.writeln("validatePegMeasurementUOM");
+	var hm= getTradeItemMultiValueAttributeValueSS(tradeItem,sAttributePath);
+    var hv= getTradeItemMultiValueAttributeValueSS(tradeItem,substring(sAttributePath,0,sAttributePath.lastIndexOf("/"))+"/value");
+    forEachHmElement(hm, OKEY, OVALUE){
+        if(!isEmpty(OVALUE) && isEmpty(hv[substring(OKEY,0,OKEY.lastIndexOf("/"))+"/value"])){
+
+            return "VALIDATE_PEG_UOM";
+        }else if(isEmpty(OVALUE) && !isEmpty(hv[substring(OKEY,0,OKEY.lastIndexOf("/"))+"/value"])){
+        	return "VALIDATE_PEG_VALUE";
+        }
+    	if(OKEY.indexOf("Horizontal")>0){
+            skey = substring(OKEY,0,OKEY.indexOf("#")+2)+ "/pegVertical/uom";
+            vm = getTradeItemMultiValueAttributeValueSS(tradeItem,"Global_Local_Attributes_Spec/pegMeasurements/pegVertical/uom");
+        } else {
+            skey = substring(OKEY,0,OKEY.indexOf("#")+2)+ "/pegHorizontal/uom";
+            vm = getTradeItemMultiValueAttributeValueSS(tradeItem,"Global_Local_Attributes_Spec/pegMeasurements/pegHorizontal/uom");
+        }
+
+        if(hm[OKEY] != vm[skey]){
+       		 //out.writeln("VALIDATE_PEG_FAILED");
+            return "VALIDATE_PEG_FAILED";
+
+        }
+    }
+    return null;
+}
+function validateMeasurementValues(tradeItem, sAttributePath){
+	//out.writeln("validateMeasurementValues");
+    var sDepthValue = getTradeItemAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/depth/value");
+	var sHeightValue = getTradeItemAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/height/value");
+	var sWidthValue = getTradeItemAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/width/value");
+	if (!isEmpty(sWidthValue)) {
+		return false;
+	} else if (!isEmpty(sDepthValue)) {
+		return false;
+	} else if (!isEmpty(sHeightValue)) {
+		return false;
+	} else {
+		return true;
+	}
+}
+
+function validateConsumerUnit(tradeItem, sAttributePath) {
+	//out.writeln("validateConsumerUnit");
+	var sValue = getTradeItemAttributeValueSS(tradeItem, sAttributePath);
+     if(isEmpty(sValue)){
+         return "MANDATORY";
+     }
+	var tm= getTradeItemAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/TargetMarket");
+	if( tm == "SE"){
+		 var flag=false;
+		 var productName= getTradeItemMultiValueAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/ProductName/text");
+		 var brandName= getTradeItemMultiValueAttributeValueSS(tradeItem, "Global_Attributes_Spec/brandName");
+		 var sConsumerUnitIndicator = getTradeItemAttributeValueSS(tradeItem, "Global_Attributes_Spec/IsTradeItemAConsumerUnit");
+		 var descSize= getTradeItemMultiValueAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/productSize/descriptiveSize/text");
+
+		 forEachHmElement(productName, path, value){
+				 if(sConsumerUnitIndicator == "true" && !isEmpty(brandName["Global_Attributes_Spec/brandName"]) && !isEmpty(value)  && brandName["Global_Attributes_Spec/brandName"] == value){
+					flag=true;
+				 }
+		 }
+
+		 forEachHmElement(productName, path, value){
+			 forEachHmElement(descSize, dpath, dvalue){
+				if (!isEmpty(dvalue) && !isEmpty(value) && value == dvalue ){
+					    flag=true;
+				  }
+			 }
+		 }
+	     if(flag == true){
+		    return "FUNCTIONAL_NAME_TRADEITEM_SIZE_DESCRIPTION";
+		 }
+       }
+
+
+       if( tm == "AU" || tm == "NZ" || tm == "SE" || tm == "NL" || tm == "HU" || tm == "CA" || tm == "US"){
+		var attribMap = getTradeItemMultiValueAttributeValueSS(tradeItem, "Global_Attributes_Spec/netContent/value");
+		var valuePresent=false;
+	     forEachHmElement(attribMap, OKEY, OVALUE)
+		{
+		  if(!isEmpty(OVALUE)){
+		     valuePresent=true;
+		   }
+		 }
+
+		 if(valuePresent == false){
+			return "NETCONTENT_POPULATED";
+		 }
+        }
+	return null;
+}
+
+function validateDataRecipientGLN(tradeItem, sAttributePath) {
+	//out.writeln("validateDataRecipientGLN");
+    //When generating RDD type attribute, the empty value should always be in the last occurance.
+    var hm=getTradeItemMultiValueAttributeValueSS(tradeItem,sAttributePath);
+    forEachHmElement(hm, OKEY, OVALUE){
+        if(isEmpty(hm[OKEY])){
+          var ocuranceNumber = substring (OKEY, (OKEY.lastIndexOf("#")+1), (OKEY.indexOf("/dataRecipientGLN")));
+          if(toInteger(ocuranceNumber) < hm.size()-1){
+              return "VALIDATE_LAST_OCCURANCE_EMPTY_FAILED";
+          }
+        }
+    }
+    return null;
+}
+
+function validateNumOfItemsPerPallet(tradeItem, sAttributePath) {
+
+	//Do not populate if "Product Type" is PL (Pallet).
+
+	sProdType = getTradeItemAttributeValueSS(tradeItem, "Global_Attributes_Spec/ProductType");
+
+	sRes = getTradeItemAttributeValueSS(tradeItem, sAttributePath);
+
+	if (!isEmpty(sProdType) && sProdType == "PL"  && !isEmpty(sRes)) {
+
+		return "VALIDATE_NUM_OF_ITEMS_PER_PALLET_FAILED";
+
+	}
+	return null;
+
+}
+
+function validatePercentageAlcohol(tradeItem, sAttributePath) {
+
+var tm= getTradeItemAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/TargetMarket");
+var alcohol= getTradeItemAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/percentageOfAlcoholPerVolume");
+if(tm == "AU"){
+    var taxRate= getTradeItemMultiValueAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/taxRate/typeCode");
+    var flag=false;
+    forEachHmElement(taxRate, key, value)
+	{
+	  if(!isEmpty(value) && value == "WET" && isEmpty(alcohol)){
+	     return "PERCENTRAGEOFALCOHOL_MUST_BE_POPULATED";
+	  }
+	}
+ }
+	return null;
+}
+
+
+function validateMultiUOMValue(tradeItem,sAttrPath)
+{
+	if(isInValidUOMValue(tradeItem, sAttrPath, "value"))
+	{
+		return "INVALID_UOM";
+	}
+	return null;
+}
+
+
+function isMinMaxQunatityValid(tradeItem, minPath, maxPath) {
+	var minMap = getTradeItemMultiValueAttributeValueSS(tradeItem, minPath+"/value");
+	var maxMap = getTradeItemMultiValueAttributeValueSS(tradeItem, maxPath+"/value");
+
+	var minDataRDDMap = getTradeItemMultiValueAttributeValueSS(tradeItem, minPath+"/dataRecipientGLN");
+	var maxDataRDDMap = getTradeItemMultiValueAttributeValueSS(tradeItem, maxPath+"/dataRecipientGLN");
+
+	forEachHmElement(minMap, path, value)
+	{
+		if(!isEmpty(value))
+		{
+			var relPath = substring(path,0,path.lastIndexOf("#")+substring(path,path.lastIndexOf("#")).indexOf("/value"));
+			var minGLN = minDataRDDMap[relPath+"/dataRecipientGLN"];
+			forEachHmElement(maxDataRDDMap, maxGLNPath, maxGLNValue)
+			{
+				if( minGLN == maxGLNValue)
+				{
+					var glnRelPath = substring(maxGLNPath,0,maxGLNPath.lastIndexOf("#")+substring(maxGLNPath,maxGLNPath.lastIndexOf("#")).indexOf("/dataRecipientGLN"));
+					var maxValue = maxMap[glnRelPath+"/value"];
+					if(!isEmpty(maxValue))
+					{
+						if(toInteger(value) > toInteger(maxValue))
+						{
+							return false;
+						}
+					}
+				}
+			}
+		}
+	}
+	return true;
+  }
+
+function validateAgreedBuyingQuantity(tradeItem, sAttributePath) {
+	var minPath = "Global_Local_Attributes_Spec/agreedMinimumBuyingQuantity";
+	var maxPath = "Global_Local_Attributes_Spec/agreedMaximumBuyingQuantity";
+	if(isMinMaxQunatityValid(tradeItem,minPath,maxPath))
+	{
+		return null;
+	}else
+	{
+		return "MIN_MAX_BUYING_QUANTITY_VALIDATION_FAILED";
+	}
+ }
+
+function validateOrderQuantity(tradeItem, sAttributePath) {
+	var minPath = getTradeItemAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/minimumOrderQuantity/value");
+	var maxPath = getTradeItemAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/maximumOrderQuantity/value");
+
+     var isPresent = false;
+    var sOrderingUnitIndicator = getTradeItemMultiValueAttributeValueSS(tradeItem, "Global_Local_Attributes_Spec/isOrderableUnit/value");
+    	forEachHmElement(sOrderingUnitIndicator, OKEY, OVALUE){
+        	if(!isEmpty(OVALUE) && OVALUE == "true"){
+           	 isPresent = true;
+      }
+    }
+
+	//error code - 3053,3055
+    if(!isEmpty(minPath) || !isEmpty(maxPath) && isPresent == false){
+       return "ORDERABLE_UNIT_INDICATOR_MUST_BE_TRUE";
+    }
+
+	if(isMinMaxQunatityValid(tradeItem,minPath,maxPath))
+	{
+		return null;
+	}else
+	{
+		return "MIN_MAX_ORDER_QUANTITY_VALIDATION_FAILED";
+	}
+}
+
+//////////////////////////////////////////////////////////////////////////////////
+//																				//
+//		Validations for Core Flex Attributes Starts								//
+//																				//
+//////////////////////////////////////////////////////////////////////////////////
+
+function validateGPCBrickAttributes(tradeItem, sAttributePath)
+{
+
+	var sConsumerUnitIndicator = getTradeItemAttributeValueSS(tradeItem, "Global_Attributes_Spec/IsTradeItemAConsumerUnit");
+	var hmbrickAttr = getTradeItemMultiValueAttributeValueSS(tradeItem, sAttributePath );
+
+	forEachHmElement(hmbrickAttr, path, value)
+	{
+
+		if((sConsumerUnitIndicator == "false" || isEmpty(sConsumerUnitIndicator))  && !isEmpty(value))
+		{
+			return "GPC_BRICK_ATTR_VALIDATION_FAILED";
+		}
+	}
+
+	var brickCode=getTradeItemAttributeValueSS(tradeItem,"Global_Attributes_Spec/gpcBrickAttributes/gpcBrickCode");
+	var hmbrickAttrib=getTradeItemMultiValueAttributeValueSS(tradeItem,"Global_Attributes_Spec/gpcBrickAttributes/gpcBrickAttributeValues/gpcBrickAttribute");
+	var hmbrickAttribValue=getTradeItemMultiValueAttributeValueSS(tradeItem,"Global_Attributes_Spec/gpcBrickAttributes/gpcBrickAttributeValues/gpcBrickAttributeValue");
+
+	var isBrickAttrEmpty = false;
+
+	if(isEmpty(brickCode))
+	{
+		isBrickAttrEmpty = true;
+	}
+
+	forEachHmElement(hmbrickAttrib, path, value)
+	{
+		var relpath = substring(path,0,path.lastIndexOf("/"))+"/gpcBrickAttributeValue";
+
+		if (isBrickAttrEmpty && (!isEmpty(value) || !isEmpty(hmbrickAttribValue[relpath])))
+		{
+			return "GPC_BRICK_ATTR_REQUIRED";
+		}
+		if(!isBrickAttrEmpty && (isEmpty(value) || isEmpty(hmbrickAttribValue[relpath])))
+		{
+			return "GPC_BRICK_ATTR_REQUIRED";
+		}
+	}
+
+	return null;
+}
+
+
+function validateGS1ContextAttributes(tradeItem, sAttributePath)
+{
+
+	var sConsumerUnitIndicator = getTradeItemAttributeValueSS(tradeItem, "Global_Attributes_Spec/IsTradeItemAConsumerUnit");
+	var hmgs1ContextAttr = getTradeItemMultiValueAttributeValueSS(tradeItem, sAttributePath );
+
+	forEachHmElement(hmgs1ContextAttr, path, value)
+	{
+
+		if((sConsumerUnitIndicator == "false" || isEmpty(sConsumerUnitIndicator))  && !isEmpty(value))
+		{
+			return "GS1_CONTEXT_ATTR_VALIDATION_FAILED";
+		}
+	}
+	return null;
+}
+
+
+function validateGS1ContextCharacteristicsMeasurementAttribute(tradeItem, sAttributePath)
+{
+	var sConsumerUnitIndicator = getTradeItemAttributeValueSS(tradeItem, "Global_Attributes_Spec/IsTradeItemAConsumerUnit");
+	var hmUom = getTradeItemMultiValueAttributeValueSS(tradeItem, sAttributePath );
+	var hmCharacteristicCode = getTradeItemMultiValueAttributeValueSS(tradeItem, "Global_Attributes_Spec/gs1ContextAttributes/productCharacteristics/characteristicsCode");
+	var hmUomValue = getTradeItemMultiValueAttributeValueSS(tradeItem, "Global_Attributes_Spec/gs1ContextAttributes/productCharacteristics/characteristicsMeasurement/value");
+
+	forEachHmElement(hmCharacteristicCode, path, value)
+	{
+
+		var relpath = substring(path,0,path.indexOf("#")+substring(path,path.indexOf("#")).indexOf("/"));
+		var temp = relpath +"/characteristicsMeasurement/uom";
+
+		temp = relpath+"/characteristicsMeasurement/value";
+
+		if((sConsumerUnitIndicator == "false" || isEmpty(sConsumerUnitIndicator)) && !isEmpty(hmUom[relpath+"/characteristicsMeasurement/uom"]))
+		{
+			return "GS1_CONTEXT_ATTR_VALIDATION_FAILED";
+		}
+
+		if ((isEmpty(hmUom[relpath+"/characteristicsMeasurement/uom"]) && !isEmpty(hmUomValue[relpath+"/characteristicsMeasurement/value"])) || (!isEmpty(hmUom[relpath+"/characteristicsMeasurement/uom"]) && isEmpty(hmUomValue[relpath+"/characteristicsMeasurement/value"])))
+		{
+			return "GS1_CONTEXT_UOM_VALUE_INTERDEPENDENT";
+		}
+		if(isEmpty(value) && (!isEmpty(hmUom[relpath+"/characteristicsMeasurement/uom"]) || !isEmpty(hmUomValue[relpath+"/characteristicsMeasurement/value"])))
+		{
+			return "GS1_CONTEXT_CHARACTERISTIC_CODE_IS_EMPTY";
+		}
+
+	}
+	return null;
+
+}
+
+function validateGS1ContextMultiOccurAttribute(tradeItem, sAttributePath)
+{
+	var sConsumerUnitIndicator = getTradeItemAttributeValueSS(tradeItem, "Global_Attributes_Spec/IsTradeItemAConsumerUnit");
+	var hmgs1ContextAttr = getTradeItemMultiValueAttributeValueSS(tradeItem, sAttributePath);
+	var hmcharacteristicCode = getTradeItemMultiValueAttributeValueSS(tradeItem, "Global_Attributes_Spec/gs1ContextAttributes/productCharacteristics/characteristicsCode");
+	var attributeName = substring(sAttributePath,sAttributePath.lastIndexOf("/")+1,sAttributePath.length());
+
+	forEachHmElement(hmcharacteristicCode, pathCode, valueCode)
+	{
+		var relpath = substring(pathCode,0,pathCode.indexOf("#")+substring(pathCode,pathCode.indexOf("#")).indexOf("/"));
+		var attrPath =concat(relpath,"/",attributeName);
+		var hmAttrVal = getTradeItemMultiValueAttributeValueSS(tradeItem, attrPath);
+
+		forEachHmElement(hmAttrVal, path, value)
+		{
+
+			if((sConsumerUnitIndicator == "false" || isEmpty(sConsumerUnitIndicator)) && !isEmpty(value))
+			{
+				return "GS1_CONTEXT_ATTR_VALIDATION_FAILED";
+			}
+
+			if(isEmpty(valueCode) && !isEmpty(value))
+			{
+				return "GS1_CONTEXT_CHARACTERISTIC_CODE_IS_EMPTY";
+			}
+		}
+	}
+	return null;
+}
+
+function validateGS1ContextCharacteristicsCodeAttributes(tradeItem, sAttributePath)
+{
+
+	var sConsumerUnitIndicator = getTradeItemAttributeValueSS(tradeItem, "Global_Attributes_Spec/IsTradeItemAConsumerUnit");
+	var hmgs1ContextAttr = getTradeItemMultiValueAttributeValueSS(tradeItem, sAttributePath);
+
+	var isCodeEmpty = true;
+
+	forEachHmElement(hmgs1ContextAttr, pathCode, valueCode)
+	{
+
+		//If Characteristic Code is not empty when Consumer Unit indicator is not true
+		if((sConsumerUnitIndicator == "false" || isEmpty(sConsumerUnitIndicator)) && !isEmpty(valueCode))
+		{
+			return "GS1_CONTEXT_ATTR_VALIDATION_FAILED";
+		}
+
+		if(isEmpty(valueCode))
+		{
+			continue;
+		}
+
+		isCodeEmpty = false;
+		var relpath = substring(pathCode,0,pathCode.indexOf("#")+substring(pathCode,pathCode.indexOf("#")).indexOf("/"));
+		var tempAttrPath =relpath+"/characteristicsMeasurement/uom";
+		var hmUom = getTradeItemMultiValueAttributeValueSS(tradeItem, "Global_Attributes_Spec/gs1ContextAttributes/productCharacteristics/characteristicsMeasurement/uom");
+
+		if(!isEmpty(hmUom[tempAttrPath]))
+		{
+			return null;
+		}
+
+		tempAttrPath="Global_Attributes_Spec/gs1ContextAttributes/productCharacteristics/characteristicsValue";
+		var attributeName = substring(tempAttrPath,tempAttrPath.lastIndexOf("/")+1,tempAttrPath.length());
+		tempAttrPath =relpath+"/"+attributeName;
+		var hmcharValue = getTradeItemMultiValueAttributeValueSS(tradeItem, tempAttrPath);
+
+		forEachHmElement(hmcharValue, code, value)
+		{
+			if(!isEmpty(value))
+			{
+				return null;
+			}
+		}
+
+		tempAttrPath="Global_Attributes_Spec/gs1ContextAttributes/productCharacteristics/characteristicsDescription";
+		attributeName = substring(tempAttrPath,tempAttrPath.lastIndexOf("/")+1,tempAttrPath.length());
+		tempAttrPath =relpath+"/"+attributeName;
+		var hmcharDesc = getTradeItemMultiValueAttributeValueSS(tradeItem, tempAttrPath);
+
+		forEachHmElement(hmcharDesc, code, value)
+			{
+			if(!isEmpty(value))
+			{
+				return null;
+			}
+		}
+	}
+
+	if(isCodeEmpty == true){
+	    return null;
+	 }
+	 else{
+	    return "GS1_CONTEXT_CHARACTERISCTIC_CODE_INTERDEPENDENT";
+	  }
+}
+
+//TM Core Attributes Validations
+function validateOrienTypeAndPrefSeq(tradeItem,sAttrPath)
+{
+
+	if(isInteroperable(tradeItem,"Target Market Extension"))
+	{
+		var sHmOrientType = getTradeItemMultiValueAttributeValueSS(tradeItem,"TM_Core_Extension_Attribute_Spec/tradeItemOrientation/orientationType");
+		var sHmOrientPref = getTradeItemMultiValueAttributeValueSS(tradeItem,"TM_Core_Extension_Attribute_Spec/tradeItemOrientation/orientationPreferenceSequence");
+		var tempHM = [];
+		forEachHmElement(sHmOrientPref,  oPath,  oValue)
+		{
+			var sOrientType = sHmOrientType[substring(oPath,0,oPath.lastIndexOf("/"))+"/orientationType"];
+
+			if ((isEmpty(oValue) && !isEmpty(sOrientType)) || (!isEmpty(oValue) && isEmpty(sOrientType)))
+			{
+				return "ORIENTATION_TYPE_SEQUENCE_FAILED";
+			}
+			tempHM[oValue] = oPath;
+		}
+		if(tempHM.size() != sHmOrientPref.size())
+		{
+			return "ORIENTATION_SEQUENCE_DUPLICATE_FAILED";
+		}
+		return null;
+	}
+	return null;
+}
+
+function validateNestingDirectionType(tradeItem,sAttrPath)
+{
+	if(isInteroperable(tradeItem,"Target Market Extension"))
+	{
+		var attributes = [];
+		attributes[0] = "TM_Core_Extension_Attribute_Spec/nestingDirection";
+		attributes[1] = "TM_Core_Extension_Attribute_Spec/nestingType";
+		if(!checkDependencies(tradeItem, attributes))
+		{
+			return "NESTING_DIRECTION_TYPE_FAILED";
+		}
+		return null;
+	}
+	return null;
+}
+
+function validateElectricalUsageClassMode(tradeItem,sAttrPath)
+{
+	if(isInteroperable(tradeItem,"Target Market Extension"))
+	{
+		var sHmUsgClsMode = getTradeItemMultiValueAttributeValueSS(tradeItem,"TM_Core_Extension_Attribute_Spec/electricalUsage/groupNodes/electricalUsageClassModeCode");
+		var sHmUsgClsModeUOM = getTradeItemMultiValueAttributeValueSS(tradeItem,"TM_Core_Extension_Attribute_Spec/electricalUsage/groupNodes/maximumElectricalUsageClassModeValue/uom");
+		var sHmUsgClsModeVA = getTradeItemMultiValueAttributeValueSS(tradeItem,"TM_Core_Extension_Attribute_Spec/electricalUsage/groupNodes/maximumElectricalUsageClassModeValue/value");
+		forEachHmElement(sHmUsgClsMode,  oPath,  oValue)
+		{
+			var sUsgClsModeUOM = sHmUsgClsModeUOM[substring(oPath,0,oPath.lastIndexOf("/"))+"/maximumElectricalUsageClassModeValue/uom"];
+			var sUsgClsModeVA = sHmUsgClsModeVA[substring(oPath,0,oPath.lastIndexOf("/"))+"/maximumElectricalUsageClassModeValue/value"];
+			if((isEmpty(oValue) && (!isEmpty(sUsgClsModeUOM) || !isEmpty(sUsgClsModeVA))) || (!isEmpty(oValue) && (isEmpty(sUsgClsModeUOM) || isEmpty(sUsgClsModeVA))))
+			{
+				return "USAGE_CLASS_MODE_DEPENDENCY_FAILED";
+			}
+		}
+		return null;
+	}
+	return null;
+}
+
+function validateMultiNonNegativeValue(tradeItem, sAttributePath){
+
+	var hm= getTradeItemMultiValueAttributeValueSS(tradeItem, sAttributePath);
+	forEachHmElement(hm, path, value){
+	  if(!isEmpty(value) && (toInteger(value) <= 0)){
+	      return "NON_NEGATIVE_NUMBER";
+	  }
+	}
+
+	return null;
+}
+
+//////////////////////////////////////////////////////////////////////////////////
+//										//
+//			Validations for Core Flex Attributes Ends		//
+//										//
+//////////////////////////////////////////////////////////////////////////////////
+
+
+//////////////////////////////////////////////////////////////////////////////////
+//										//
+//			Validations for Animal Feeding Attributes Starts		//
+//										//
+//////////////////////////////////////////////////////////////////////////////////
+
+//If feedLifeStage is not empty, then it shall not exceed one iteration per languageCode
+//Validates the language code for feedLifeStage for Animal Feeding trade item.
+// languageCode rule: If feedLifeStage is not empty, then it shall not exceed one iteration per languageCode
+function validateFeedLifeStage(tradeItem, sAttributePath) {
+	if(isInteroperable(tradeItem,"Animal Feeding")){
+		var feedLifeStagelanguageCode = getTradeItemMultiValueAttributeValueSS(tradeItem,"Animal_Feeding_Extension_Attribute_Spec/animalFeeding/feedLifestage/languageCode");
+		var langRepeated = false;
+		var i=0;
+		var langs = [];
+		forEachHmElement(feedLifeStagelanguageCode,  oPath,  oValue)
+		{
+			langs[i]=oValue;
+			i++;		
+		}
+		var langName = "";
+		for(i=0;i<langs.size();i++){
+                langName = langs[i];
+                for(var j=0;j<langs.size();j++){
+                   if(i!=j){ 
+					if(langName==langs[j]){
+						langRepeated = true;
+                    }
+				  }
+            }
+        }
+		if(langRepeated){
+			return "FEEDLIFESTAGE_LANGUAGAECODE_AT_MOST_ONE_ITERATION";
+		}
+	}
+	return null;
+}
+
+function validateMaximumFeedingAmount(tradeItem, sAttributePath) {
+	if(isInteroperable(tradeItem,"Animal Feeding")){
+		var maximumFeedingAmount = getTradeItemMultiValueAttributeValueSS(tradeItem,"Animal_Feeding_Extension_Attribute_Spec/animalFeeding/animalFeedingDetail/maximumFeedingAmount/uom");
+		var uomRepeated = false;
+		var i=0;
+		var j=0;
+		var uoms = [];
+		forEachHmElement(maximumFeedingAmount,  oPath,  oValue)
+		{
+			uoms[i]=oValue;
+			i++;		
+		}
+		var uom = "";
+		for(i=0;i<uoms.size();i++){
+                uom = uoms[i];
+                for(var j=0;j<uoms.size();j++){
+                   if(i!=j){ 
+					if(uom==uoms[j]){
+						uomRepeated = true;
+                    }
+				  }
+            }
+        }
+		if(uomRepeated) {
+			return "MAXIMUMFEEDINGAMOUNT_MEASUREMENTUNITCODE_AT_MOST_ONE_ITERATION";
+		}
+	}
+	return null;
+}
+
+
+function validateMinimumFeedingAmount(tradeItem, sAttributePath) {
+	if(isInteroperable(tradeItem,"Animal Feeding")){
+		var minimumFeedingAmount = getTradeItemMultiValueAttributeValueSS(tradeItem,"Animal_Feeding_Extension_Attribute_Spec/animalFeeding/animalFeedingDetail/minimumFeedingAmount/uom");
+		var uomRepeated = false;
+		var i=0;
+		var j=0;
+		var uoms = [];
+		forEachHmElement(minimumFeedingAmount,  oPath,  oValue)
+		{
+			uoms[i]=oValue;
+			i++;		
+		}
+		var uom = "";
+		for(i=0;i<uoms.size();i++){
+                uom = uoms[i];
+                for(var j=0;j<uoms.size();j++){
+                   if(i!=j){ 
+					if(uom==uoms[j]){
+						uomRepeated = true;
+                    }
+				  }
+            }
+        }
+		if(uomRepeated){
+			return "MINIMUMFEEDINGAMOUNT_MEASUREMENTUNITCODE_AT_MOST_ONE_ITERATION";
+		}
+	}
+	return null;
+}
+
+
+function validateRecommendedFrequencyOfFeeding(tradeItem, sAttributePath) {
+	if(isInteroperable(tradeItem,"Animal Feeding")){
+		var recommendedFrequencyOfFeeding = getTradeItemMultiValueAttributeValueSS(tradeItem,"Animal_Feeding_Extension_Attribute_Spec/animalFeeding/animalFeedingDetail/recommendedFrequencyOfFeeding/languageCode");
+		var langRepeated = false;
+		var i=0;
+		var j=0;
+		var langs = [];
+		forEachHmElement(recommendedFrequencyOfFeeding,  oPath,  oValue)
+		{
+			langs[i]=oValue;
+			i++;		
+		}
+		var lang = "";
+		for(i=0;i<langs.size();i++){
+                lang = langs[i];
+                for(var j=0;j<langs.size();j++){
+                   if(i!=j){ 
+					if(lang==langs[j]){
+						langRepeated = true;
+                    }
+				  }
+            }
+        }
+		if(langRepeated){
+			return "RECOMMENDEDFREQUENCYOFFEEDING_LANGUAGAECODE_AT_MOST_ONE_ITERATION";
+		}
+	}
+	return null;
+}
+
+function validateMaximumWeightOfAnimalBeingFed(tradeItem, sAttributePath) {
+	if(isInteroperable(tradeItem,"Animal Feeding")){
+		var maximumWeightOfAnimalBeingFed = getTradeItemMultiValueAttributeValueSS(tradeItem,"Animal_Feeding_Extension_Attribute_Spec/animalFeeding/maximumWeightOfAnimalBeingFed/uom");
+		var uomRepeated = false;
+		var i=0;
+		var j=0;
+		var uoms = [];
+		forEachHmElement(maximumWeightOfAnimalBeingFed,  oPath,  oValue)
+		{
+			uoms[i]=oValue;
+			i++;		
+		}
+		var uom = "";
+		for(i=0;i<uoms.size();i++){
+                uom = uoms[i];
+                for(var j=0;j<uoms.size();j++){
+                   if(i!=j){ 
+					if(uom==uoms[j]){
+						uomRepeated = true;
+                    }
+				  }
+            }
+        }
+		if(uomRepeated){
+			return "MAXIMUMWEIGHTOFANIMALBEINGFED_MEASUREMENTUNITCODE_AT_MOST_ONE_ITERATION";
+		}
+	}
+	return null;
+}
+
+
+function validateAnimalNutrientQuantityContainedBasis(tradeItem, sAttributePath) {
+	if(isInteroperable(tradeItem,"Animal Feeding")){
+		var animalNutrientQuantityContainedBasis = getTradeItemMultiValueAttributeValueSS(tradeItem,"Animal_Feeding_Extension_Attribute_Spec/animalFeeding/animalFeedingDetail/animalNutrientQuantityContainedBasis/uom");
+		var uomRepeated = false;
+		var i=0;
+		var j=0;
+		var uoms = [];
+		forEachHmElement(animalNutrientQuantityContainedBasis,  oPath,  oValue)
+		{
+			uoms[i]=oValue;
+			i++;		
+		}
+		var uom = "";
+		for(i=0;i<uoms.size();i++){
+                uom = uoms[i];
+                for(var j=0;j<uoms.size();j++){
+                   if(i!=j){ 
+					if(uom==uoms[j]){
+						uomRepeated = true;
+                    }
+				  }
+            }
+        }
+		if(uomRepeated){
+			return "ANIMALNUTRIENTQUANTITYCONTAINED_MEASUREMENTUNITCODE_AT_MOST_ONE_ITERATION";
+		}
+	}
+	return null;
+}
+
+function validateAnimalNutrientQuantityContained(tradeItem, sAttributePath) {
+	if(isInteroperable(tradeItem,"Animal Feeding")){
+		var animalNutrientQuantityContained = getTradeItemMultiValueAttributeValueSS(tradeItem,"Animal_Feeding_Extension_Attribute_Spec/animalFeeding/animalFeedingDetail/animalNutrientQuantityContained/uom");
+		var uomRepeated = false;
+		var i=0;
+		var j=0;
+		var uoms = [];
+		forEachHmElement(animalNutrientQuantityContained,  oPath,  oValue)
+		{
+			uoms[i]=oValue;
+			i++;		
+		}
+		var uom = "";
+		for(i=0;i<uoms.size();i++){
+                uom = uoms[i];
+                for(var j=0;j<uoms.size();j++){
+                   if(i!=j){ 
+					if(uom==uoms[j]){
+						uomRepeated = true;
+                    }
+				  }
+            }
+        }
+		if(uomRepeated){
+			return "ANIMALNUTRIENTQUANTITYCONTAINED_MEASUREMENTUNITCODE_AT_MOST_ONE_ITERATION";
+		}
+	}
+	return null;
+}
+
+
+function validateFeedingAmountBasisDescription(tradeItem, sAttributePath) {
+	if(isInteroperable(tradeItem,"Animal Feeding")){
+		var feedingAmountBasisDescription = getTradeItemMultiValueAttributeValueSS(tradeItem,"Animal_Feeding_Extension_Attribute_Spec/animalFeeding/animalFeedingDetail/feedingAmountBasisDescription/languageCode");
+		var langRepeated = false;
+		var i=0;
+		var j=0;
+		var langs = [];
+		forEachHmElement(feedingAmountBasisDescription,  oPath,  oValue)
+		{
+			langs[i]=oValue;
+			i++;		
+		}
+		var lang = "";
+		for(i=0;i<langs.size();i++){
+                lang = langs[i];
+                for(var j=0;j<langs.size();j++){
+                   if(i!=j){ 
+					if(lang==langs[j]){
+						langRepeated = true;
+                    }
+				  }
+            }
+        }
+		if(langRepeated){
+			return "FEEDINGAMOUNTBASISDESCRIPTION_LANGUAGAECODE_AT_MOST_ONE_ITERATION";
+		}
+	}
+	return null;
+}
+
+function validateTradeItemLicenseTitle(tradeItem, sAttributePath) {
+	if(isInteroperable(tradeItem,"Trade Item Licensing")){
+		var tradeItemLicenseTitle = getTradeItemMultiValueAttributeValueSS(tradeItem,"Trade_Item_Licensing_Extension_Attribute_Spec/Trade_Item_Licensing/tradeItemLicense/tradeItemLicenseDetail/tradeItemLicenseTitle/languageCode");
+		var langRepeated = false;
+		var i=0;
+		var j=0;
+		var langs = [];
+		forEachHmElement(tradeItemLicenseTitle,  oPath,  oValue)
+		{
+			langs[i]=oValue;
+			i++;
+		}
+		var lang = "";
+		for(i=0;i<langs.size();i++){
+                lang = langs[i];
+                for(var j=0;j<langs.size();j++){
+                   if(i!=j){ 
+					if(lang==langs[j]){
+						langRepeated = true;
+                    }
+				  }
+            }
+        }
+		if(langRepeated){
+			return "TRADEITEMLICENSETITLE_MEASUREMENTUNITCODE_AT_MOST_ONE_ITERATION";
+		}
+	}
+	return null;
+}
+
+function validateAvailableTimeLanguage(tradeItem, sAttributePath) {
+		var availableTimelanguageCode = getTradeItemMultiValueAttributeValueSS(tradeItem,"TM_Additional_Attribute_Extension_Spec/tradeItemContactInfo/availableTime/languageCode");
+		
+		var langRepeated = false;
+		var i=0;
+		var langs = [];
+		forEachHmElement(availableTimelanguageCode,  oPath,  oValue)
+		{
+			langs[i]=oValue;
+			i++;		
+		}
+		
+		var langName = "";
+		for(i=0;i<langs.size();i++){
+                langName = langs[i];
+                for(var j=0;j<langs.size();j++){
+                   if(i!=j){ 
+					if(langName==langs[j]){
+						langRepeated = true;
+                    }
+				  }
+            }
+        }
+		if(langRepeated){
+			return "AVAILABLETIME_LANGUAGAECODE_AT_MOST_ONE_ITERATION";
+		}
+	return null;
+}
+
+function validateContentsDescriptionLanguage(tradeItem, sAttributePath) {
+		var contentsDescriptionlanguageCode = getTradeItemMultiValueAttributeValueSS(tradeItem,"TM_Additional_Attribute_Extension_Spec/contentsDescription/languageCode");
+		
+		
+		var langRepeated = false;
+		var i=0;
+		var langs = [];
+		forEachHmElement(contentsDescriptionlanguageCode,  oPath,  oValue)
+		{
+			langs[i]=oValue;
+			i++;		
+		}
+		var langName = "";
+		for(i=0;i<langs.size();i++){
+                langName = langs[i];
+                for(var j=0;j<langs.size();j++){
+                   if(i!=j){ 
+					if(langName==langs[j]){
+						langRepeated = true;
+                    }
+				  }
+            }
+        }
+		if(langRepeated){
+			return "CONTENTSDESCRIPTION_LANGUAGAECODE_AT_MOST_ONE_ITERATION";
+		}
+	return null;
+}
+
+function validateNonMarkedTradeItemComponentsLanguage(tradeItem, sAttributePath) {
+		var nonMarkedTradeItemComponentslanguageCode = getTradeItemMultiValueAttributeValueSS(tradeItem,"TM_Additional_Attribute_Extension_Spec/nonMarkedTradeItemComponents/languageCode");
+		var langRepeated = false;
+		var i=0;
+		var langs = [];
+		forEachHmElement(nonMarkedTradeItemComponentslanguageCode,  oPath,  oValue)
+		{
+			langs[i]=oValue;
+			i++;		
+		}
+		var langName = "";
+		for(i=0;i<langs.size();i++){
+                langName = langs[i];
+                for(var j=0;j<langs.size();j++){
+                   if(i!=j){ 
+					if(langName==langs[j]){
+						langRepeated = true;
+                    }
+				  }
+            }
+        }
+		if(langRepeated){
+			return "NONMARKEDTRADEITEMCOMPONENTS_LANGUAGAECODE_AT_MOST_ONE_ITERATION";
+		}
+	return null;
+}
+
+function validateProductionVariantDescriptionLanguage(tradeItem, sAttributePath) {
+		var productionVariantDescriptionlanguageCode = getTradeItemMultiValueAttributeValueSS(tradeItem,"TM_Additional_Attribute_Extension_Spec/productionVariantDescription/languageCode");
+		var langRepeated = false;
+		var i=0;
+		var langs = [];
+		forEachHmElement(productionVariantDescriptionlanguageCode,  oPath,  oValue)
+		{
+			langs[i]=oValue;
+			i++;		
+		}
+		var langName = "";
+		for(i=0;i<langs.size();i++){
+                langName = langs[i];
+                for(var j=0;j<langs.size();j++){
+                   if(i!=j){ 
+					if(langName==langs[j]){
+						langRepeated = true;
+                    }
+				  }
+            }
+        }
+		if(langRepeated){
+			return "PRODUCTIONVARIANTDESCRIPTION_LANGUAGAECODE_AT_MOST_ONE_ITERATION";
+		}
+	return null;
+}
+
+function validatePropertyDescription(tradeItem, sAttributePath) {
+		var propertyDescriptionlanguageCode = getTradeItemMultiValueAttributeValueSS(tradeItem,"TM_Additional_Attribute_Extension_Spec/alternateClassification/additionalProperty/propertyDescription/languageCode");
+		var langRepeated = false;
+		var i=0;
+		var langs = [];
+		forEachHmElement(propertyDescriptionlanguageCode,  oPath,  oValue)
+		{
+			langs[i]=oValue;
+			i++;		
+		}
+		var langName = "";
+		for(i=0;i<langs.size();i++){
+                langName = langs[i];
+                for(var j=0;j<langs.size();j++){
+                   if(i!=j){ 
+					if(langName==langs[j]){
+						langRepeated = true;
+                    }
+				  }
+            }
+        }
+		if(langRepeated){
+			return "PROPERTYDESCRIPTION_LANGUAGAECODE_AT_MOST_ONE_ITERATION";
+		}
+	return null;
+}
+
+function validateAdditionalPropertyDescription(tradeItem, sAttributePath) {
+		var additionalPropertyDescriptionlanguageCode = getTradeItemMultiValueAttributeValueSS(tradeItem,"TM_Additional_Attribute_Extension_Spec/alternateClassification/additionalProperty/additionalPropertyDescription/languageCode");
+		var langRepeated = false;
+		var i=0;
+		var langs = [];
+		forEachHmElement(additionalPropertyDescriptionlanguageCode,  oPath,  oValue)
+		{
+			langs[i]=oValue;
+			i++;		
+		}
+		var langName = "";
+		for(i=0;i<langs.size();i++){
+                langName = langs[i];
+                for(var j=0;j<langs.size();j++){
+                   if(i!=j){ 
+					if(langName==langs[j]){
+						langRepeated = true;
+                    }
+				  }
+            }
+        }
+		if(langRepeated){
+			return "ADDITIONALPROPERTYDESCRIPTION_LANGUAGAECODE_AT_MOST_ONE_ITERATION";
+		}
+	return null;
+}
+
+function validateProductInformationLegalDisclaimer(tradeItem, sAttributePath) {
+		var productInformationLegalDisclaimerlanguageCode = getTradeItemMultiValueAttributeValueSS(tradeItem,"TM_Additional_Attribute_Extension_Spec/productInformationLegalDisclaimer/languageCode");
+		var langRepeated = false;
+		var i=0;
+		var langs = [];
+		forEachHmElement(productInformationLegalDisclaimerlanguageCode, oPath, oValue)
+		{
+			langs[i]=oValue;
+			i++;
+		}
+		var langName = "";
+		for(i=0;i<langs.size();i++){
+                langName = langs[i];
+                for(var j=0;j<langs.size();j++){
+                   if(i!=j){ 
+					if(langName==langs[j]){
+						langRepeated = true;
+                    }
+				  }
+            }
+        }
+		if(langRepeated){
+			return "PRODUCTINFORMATIONLEGALDISCLAIMERLANGUAGECODE_LANGUAGAECODE_AT_MOST_ONE_ITERATION";
+		}
+	return null;
+}
+
+function validatePropertyMeasurement(tradeItem, sAttributePath) {
+		var propertyMeasurementuom = getTradeItemMultiValueAttributeValueSS(tradeItem,"TM_Additional_Attribute_Extension_Spec/alternateClassification/additionalProperty/propertyMeasurement/uom");
+		var langRepeated = false;
+		var i=0;
+		var langs = [];
+		forEachHmElement(propertyMeasurementuom,  oPath,  oValue)
+		{
+			langs[i]=oValue;
+			i++;		
+		}
+		var langName = "";
+		for(i=0;i<langs.size();i++){
+                langName = langs[i];
+                for(var j=0;j<langs.size();j++){
+                   if(i!=j){ 
+					if(langName==langs[j]){
+						langRepeated = true;
+                    }
+				  }
+            }
+        }
+		
+		if(langRepeated){
+			return "PROPERTYMEASUREMENT_UOM_AT_MOST_ONE_ITERATION";
+		}
+	return null;
+}
+
+function validateAdditionalTradeItemClassificationCodeSystem(tradeItem, sAttributePath) {
+	var code = getTradeItemAttributeValueSS(tradeItem,"TM_Additional_Attribute_Extension_Spec/alternateClassification/code");
+	var scheme = getTradeItemAttributeValueSS(tradeItem,"TM_Additional_Attribute_Extension_Spec/alternateClassification/scheme");
+	if(code!=null && code!=""){
+		if(scheme==null || scheme==""){
+			return "CODE_SCEME_AT_MOST_ONE_VALUE";
+		}
+	}
+	if(scheme!=null && scheme!=""){
+		if(code==null || code==""){
+			return "SCEME_CODE_AT_MOST_ONE_VALUE";
+		}
+	}
+	return null;
+}

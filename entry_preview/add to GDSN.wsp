@@ -1,0 +1,23 @@
+// this script will add the item to the static selection gdsn_C010 (for example)
+// those items can then be exported using the appropriate report :)
+// Entry Preview Script [New: add to GDSN]   	
+// Selected Container Type: Catalog.
+// Selected Catalog: **All Catalogs**.
+// Selected input parameters spec: None.
+// Selected Entry Preview Script: add to GDSN.
+// Selected type: Regular.
+
+out.writeln("<p>Adding items for GDSN export...</p>");
+out.write("<ul>");
+forEachEntrySetElement(entrySet, entry){
+    var key=entry.getPrimaryKey();
+    var ctgCode=substring(entry.getEntryContainer().getCtgName(),1,4);
+    var sel=getSelectionByName("gdsn_C"+ctgCode);
+    sel.addEntryToSelection(entry);
+    sel.saveSelection();
+    out.writeln("<li>Item " + key + " successfully added to GDSN Selection</li>"); 
+}
+out.write("</ul>");
+
+
+out.writeln("<p>Done !</p>");
